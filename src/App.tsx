@@ -57,7 +57,7 @@ const handlePrint = () => {
           <div className="flex items-center">
             <FileText className={`h-8 w-8 ${blackMode ? 'text-white' : 'text-black'}`} />
             <h1 className={`ml-2 text-2xl font-semibold ${blackMode ? 'text-white' : 'text-black'}`}>
-              Invoice Generator
+              Navokta
             </h1>
           </div>
           <div className="flex space-x-4">
