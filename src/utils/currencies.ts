@@ -12,24 +12,24 @@ export const currencies: Currency[] = [
   { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
 ];
 
-export const formatCurrency = (amount: number, currencyCode: string = 'USD'): string => {
+export const formatCurrency = (amount: number, currencyCode: string = 'INR'): string => {
   // Ensure we have a valid currency code
   if (!currencyCode || typeof currencyCode !== 'string') {
     console.warn('Invalid currency code provided, falling back to USD');
-    currencyCode = 'USD';
+    currencyCode = 'INR';
   }
 
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: currencyCode,
     }).format(amount);
   } catch (error) {
     console.error('Error formatting currency:', error);
-    // Fallback to basic formatting with USD
-    return new Intl.NumberFormat('en-US', {
+    // Fallback to basic formatting with INR
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
     }).format(amount);
   }
 };

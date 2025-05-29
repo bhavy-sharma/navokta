@@ -8,7 +8,7 @@ interface LogoUploadProps {
   blackMode: boolean;
 }
 
-const LogoUpload: React.FC<LogoUploadProps> = ({ currentLogo, onLogoChange, blackMode }) => {
+const LogoUpload: React.FC<LogoUploadProps> = ({ currentLogo, onLogoChange }) => {
   const [previewUrl, setPreviewUrl] = useState<string>(currentLogo || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,15 +46,13 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ currentLogo, onLogoChange, blac
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+        <label className={`block text-sm font-medium `}>
           Company Logo
         </label>
         {previewUrl && (
           <button
             onClick={handleRemoveLogo}
-            className={`text-sm flex items-center ${
-              blackMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'
-            }`}
+            className={`text-sm flex items-center`}
           >
             <X className="h-4 w-4 mr-1" />
             Remove
@@ -73,14 +71,10 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ currentLogo, onLogoChange, blac
       ) : (
         <div
           onClick={() => fileInputRef.current?.click()}
-          className={`w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer ${
-            blackMode
-              ? 'border-white/30 hover:border-white/50'
-              : 'border-black/30 hover:border-black/50'
-          }`}
+          className={`w-32 h-32 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer `}
         >
-          <Upload className={`h-8 w-8 ${blackMode ? 'text-white/70' : 'text-black/70'}`} />
-          <span className={`mt-2 text-sm ${blackMode ? 'text-white/70' : 'text-black/70'}`}>
+          <Upload className={`h-8 w-8`} />
+          <span className={`mt-2 text-sm `}>
             Upload Logo
           </span>
         </div>
@@ -94,7 +88,7 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ currentLogo, onLogoChange, blac
         className="hidden"
       />
       
-      <p className={`text-xs ${blackMode ? 'text-white/70' : 'text-black/70'}`}>
+      <p className={`text-xs`}>
         Recommended: Square image, max 5MB
       </p>
     </div>

@@ -18,7 +18,7 @@ export const sampleInvoiceData: InvoiceData = {
     date: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     notes: 'Payment is due within 30 days. Please include the invoice number with your payment.',
-    currency: 'USD',
+    currency: 'INR',
   },
   lineItems: [
     {

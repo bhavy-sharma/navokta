@@ -8,18 +8,16 @@ interface CurrencySelectorProps {
   blackMode: boolean;
 }
 
-const CurrencySelector: React.FC<CurrencySelectorProps> = ({ value, onChange, blackMode }) => {
+const CurrencySelector: React.FC<CurrencySelectorProps> = ({ value, onChange}) => {
   return (
     <div>
-      <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+      <label className={`block text-sm font-medium`}>
         Currency
       </label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-          blackMode ? 'bg-black text-white' : 'bg-white text-black'
-        }`}
+        className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm`}
       >
         {currencies.map((currency: Currency) => (
           <option key={currency.code} value={currency.code}>

@@ -13,7 +13,7 @@ interface InvoiceFormProps {
   blackMode: boolean;
 }
 
-const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackMode }) => {
+const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData }) => {
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     name: '',
     email: '',
@@ -31,7 +31,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
     number: `INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
     date: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    currency: 'USD',
+    currency: 'INR',
   });
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
@@ -52,11 +52,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
     }
   }, [initialData]);
 
-  useEffect(() => {
-    if (blackMode) {
-      setTaxRate(0);
-    }
-  }, [blackMode]);
 
   const handleBusinessInfoChange = (field: keyof BusinessInfo, value: string) => {
     setBusinessInfo(prev => ({ ...prev, [field]: value }));
@@ -178,23 +173,22 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
   };
 
   return (
-    <div className={`${blackMode ? 'bg-black' : 'bg-white'} border border-black rounded-lg p-6`}>
+    <div className={`border border-black rounded-lg p-6`}>
       {/* Business Information */}
       <div className="mb-8">
-        <h2 className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'} mb-4`}>
+        <h2 className={`text-lg font-semibold  mb-4`}>
           Business Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Business Name
             </label>
             <input
               type="text"
               value={businessInfo.name}
               onChange={(e) => handleBusinessInfoChange('name', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm 
               } ${errors.business_name ? 'border-red-500' : ''}`}
             />
             {errors.business_name && (
@@ -202,23 +196,21 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
             )}
           </div>
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Email
             </label>
             <input
               type="email"
               value={businessInfo.email}
               onChange={(e) => handleBusinessInfoChange('email', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.business_email ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.business_email ? 'border-red-500' : ''}`}
             />
             {errors.business_email && (
               <p className="mt-1 text-sm text-red-600">{errors.business_email}</p>
             )}
           </div>
           <div>
-            {/* <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            {/* <label className={`block text-sm font-medium `}>
               PayPal.me Link
             </label> */}
             {/* <input
@@ -226,9 +218,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
               value={businessInfo.paypalMe}
               onChange={(e) => handleBusinessInfoChange('paypalMe', e.target.value)}
               placeholder="https://paypal.me/username"
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.business_paypalMe ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.business_paypalMe ? 'border-red-500' : ''}`}
             /> */}
             {errors.business_paypalMe && (
               <p className="mt-1 text-sm text-red-600">{errors.business_paypalMe}</p>
@@ -238,19 +228,17 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
             <LogoUpload
               currentLogo={businessInfo.logo}
               onLogoChange={handleLogoChange}
-              blackMode={blackMode}
+              
             />
           </div>
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Address
             </label>
             <textarea
               value={businessInfo.address}
               onChange={(e) => handleBusinessInfoChange('address', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.business_address ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.business_address ? 'border-red-500' : ''}`}
               rows={2}
             />
             {errors.business_address && (
@@ -262,52 +250,46 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
 
       {/* Client Information */}
       <div className="mb-8">
-        <h2 className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'} mb-4`}>
+        <h2 className={`text-lg font-semibold  mb-4`}>
           Client Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Client Name
             </label>
             <input
               type="text"
               value={clientInfo.name}
               onChange={(e) => handleClientInfoChange('name', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.client_name ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.client_name ? 'border-red-500' : ''}`}
             />
             {errors.client_name && (
               <p className="mt-1 text-sm text-red-600">{errors.client_name}</p>
             )}
           </div>
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Email
             </label>
             <input
               type="email"
               value={clientInfo.email}
               onChange={(e) => handleClientInfoChange('email', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.client_email ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.client_email ? 'border-red-500' : ''}`}
             />
             {errors.client_email && (
               <p className="mt-1 text-sm text-red-600">{errors.client_email}</p>
             )}
           </div>
           <div className="md:col-span-2">
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Address
             </label>
             <textarea
               value={clientInfo.address}
               onChange={(e) => handleClientInfoChange('address', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.client_address ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.client_address ? 'border-red-500' : ''}`}
               rows={2}
             />
             {errors.client_address && (
@@ -319,53 +301,47 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
 
       {/* Invoice Details */}
       <div className="mb-8">
-        <h2 className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'} mb-4`}>
+        <h2 className={`text-lg font-semibold  mb-4`}>
           Invoice Details
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Invoice Number
             </label>
             <input
               type="text"
               value={invoiceDetails.number}
               onChange={(e) => handleInvoiceDetailsChange('number', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.invoice_number ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.invoice_number ? 'border-red-500' : ''}`}
             />
             {errors.invoice_number && (
               <p className="mt-1 text-sm text-red-600">{errors.invoice_number}</p>
             )}
           </div>
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Date
             </label>
             <input
               type="date"
               value={invoiceDetails.date}
               onChange={(e) => handleInvoiceDetailsChange('date', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.invoice_date ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.invoice_date ? 'border-red-500' : ''}`}
             />
             {errors.invoice_date && (
               <p className="mt-1 text-sm text-red-600">{errors.invoice_date}</p>
             )}
           </div>
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            <label className={`block text-sm font-medium `}>
               Due Date
             </label>
             <input
               type="date"
               value={invoiceDetails.dueDate}
               onChange={(e) => handleInvoiceDetailsChange('dueDate', e.target.value)}
-              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                blackMode ? 'bg-black text-white' : 'bg-white text-black'
-              } ${errors.invoice_dueDate ? 'border-red-500' : ''}`}
+              className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors.invoice_dueDate ? 'border-red-500' : ''}`}
             />
             {errors.invoice_dueDate && (
               <p className="mt-1 text-sm text-red-600">{errors.invoice_dueDate}</p>
@@ -375,7 +351,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
             <CurrencySelector
               value={invoiceDetails.currency}
               onChange={(currency) => handleInvoiceDetailsChange('currency', currency)}
-              blackMode={blackMode}
+              
             />
           </div>
         </div>
@@ -384,14 +360,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
       {/* Line Items */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'}`}>
+          <h2 className={`text-lg font-semibold `}>
             Line Items
           </h2>
           <button
             onClick={addLineItem}
-            className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md ${
-              blackMode ? 'text-black bg-white hover:bg-gray-200' : 'text-white bg-black hover:bg-gray-900'
-            } transition-colors duration-200`}
+            className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md transition-colors duration-200`}
             disabled={isSubmitting}
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -405,24 +379,24 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
           <table className="min-w-full divide-y divide-black">
             <thead>
               <tr>
-                <th className={`px-6 py-3 ${blackMode ? 'bg-black' : 'bg-white'} text-left text-xs font-medium ${blackMode ? 'text-white' : 'text-black'} uppercase tracking-wider`}>
+                <th className={`px-6 py-3  text-left text-xs font-medium  uppercase tracking-wider`}>
                   Description
                 </th>
-                <th className={`px-6 py-3 ${blackMode ? 'bg-black' : 'bg-white'} text-right text-xs font-medium ${blackMode ? 'text-white' : 'text-black'} uppercase tracking-wider`}>
+                <th className={`px-6 py-3  text-right text-xs font-medium  uppercase tracking-wider`}>
                   Quantity
                 </th>
-                <th className={`px-6 py-3 ${blackMode ? 'bg-black' : 'bg-white'} text-right text-xs font-medium ${blackMode ? 'text-white' : 'text-black'} uppercase tracking-wider`}>
+                <th className={`px-6 py-3  text-right text-xs font-medium  uppercase tracking-wider`}>
                   Unit Price
                 </th>
-                <th className={`px-6 py-3 ${blackMode ? 'bg-black' : 'bg-white'} text-right text-xs font-medium ${blackMode ? 'text-white' : 'text-black'} uppercase tracking-wider`}>
+                <th className={`px-6 py-3  text-right text-xs font-medium  uppercase tracking-wider`}>
                   Total
                 </th>
-                <th className={`px-6 py-3 ${blackMode ? 'bg-black' : 'bg-white'} text-right text-xs font-medium ${blackMode ? 'text-white' : 'text-black'} uppercase tracking-wider`}>
+                <th className={`px-6 py-3  text-right text-xs font-medium  uppercase tracking-wider`}>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className={`${blackMode ? 'bg-black' : 'bg-white'} divide-y divide-black`}>
+            <tbody className={` divide-y divide-black`}>
               {lineItems.map((item, index) => (
                 <tr key={index}>
                   <td className="px-6 py-4">
@@ -430,9 +404,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
                       type="text"
                       value={item.description}
                       onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                      className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                        blackMode ? 'bg-black text-white' : 'bg-white text-black'
-                      } ${errors[`lineItem_${index}_description`] ? 'border-red-500' : ''}`}
+                      className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm  ${errors[`lineItem_${index}_description`] ? 'border-red-500' : ''}`}
                       disabled={isSubmitting}
                     />
                     {errors[`lineItem_${index}_description`] && (
@@ -446,9 +418,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
                       type="number"
                       value={item.quantity}
                       onChange={(e) => updateLineItem(index, 'quantity', Number(e.target.value))}
-                      className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                        blackMode ? 'bg-black text-white' : 'bg-white text-black'
-                      } ${errors[`lineItem_${index}_quantity`] ? 'border-red-500' : ''}`}
+                      className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${errors[`lineItem_${index}_quantity`] ? 'border-red-500' : ''}`}
                       min="1"
                       disabled={isSubmitting}
                     />
@@ -463,9 +433,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
                       type="number"
                       value={item.unitPrice}
                       onChange={(e) => updateLineItem(index, 'unitPrice', Number(e.target.value))}
-                      className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                        blackMode ? 'bg-black text-white' : 'bg-white text-black'
-                      } ${errors[`lineItem_${index}_unitPrice`] ? 'border-red-500' : ''}`}
+                      className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${errors[`lineItem_${index}_unitPrice`] ? 'border-red-500' : ''}`}
                       min="0"
                       step="0.01"
                       disabled={isSubmitting}
@@ -476,13 +444,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
                       </p>
                     )}
                   </td>
-                  <td className={`px-6 py-4 text-right ${blackMode ? 'text-white' : 'text-black'}`}>
+                  <td className={`px-6 py-4 text-right `}>
                     {formatCurrency(item.total, invoiceDetails.currency)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => removeLineItem(index)}
-                      className={`${blackMode ? 'text-white hover:text-red-400' : 'text-black hover:text-red-600'} disabled:opacity-50`}
+                      className={`disabled:opacity-50`}
                       disabled={isSubmitting || lineItems.length === 1}
                     >
                       <Trash2 className="h-5 w-5" />
@@ -497,48 +465,42 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
 
       {/* Summary */}
       <div className="mb-8">
-        <h2 className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'} mb-4`}>
+        <h2 className={`text-lg font-semibold  mb-4`}>
           Summary
         </h2>
-        <div className={`${blackMode ? 'bg-black' : 'bg-white'} border border-black p-4 rounded-md`}>
+        <div className={` border border-black p-4 rounded-md`}>
           <div className="flex justify-between items-center mb-2">
-            <span className={blackMode ? 'text-white' : 'text-black'}>Subtotal</span>
-            <span className={`${blackMode ? 'text-white' : 'text-black'} font-medium`}>
+            <span className="">Subtotal</span>
+            <span className={` font-medium`}>
               {formatCurrency(subtotal, invoiceDetails.currency)}
             </span>
           </div>
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center">
-              <span className={blackMode ? 'text-white' : 'text-black'}>Tax</span>
-              {blackMode ? (
-                <span className="ml-2 text-sm text-gray-400 italic">
-                  Switch to regular mode to add tax 📋
-                </span>
-              ) : (
+              <span className="">Tax</span>
+              {(
                 <>
                   <input
                     type="number"
                     value={taxRate}
                     onChange={(e) => setTaxRate(Number(e.target.value))}
-                    className={`ml-2 block w-16 rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
-                      blackMode ? 'bg-black text-white' : 'bg-white text-black'
-                    }`}
+                    className={`ml-2 block w-16 rounded-md border-black focus:ring-black focus:border-black sm:text-sm`}
                     min="0"
                     max="100"
                     step="0.1"
-                    disabled={isSubmitting || blackMode}
+                    disabled={isSubmitting}
                   />
-                  <span className={`${blackMode ? 'text-white' : 'text-black'} ml-1`}>%</span>
+                  <span className={` ml-1`}>%</span>
                 </>
               )}
             </div>
-            <span className={`${blackMode ? 'text-white' : 'text-black'} font-medium`}>
+            <span className={` font-medium`}>
               {formatCurrency(taxAmount, invoiceDetails.currency)}
             </span>
           </div>
           <div className="flex justify-between items-center text-lg font-semibold">
-            <span className={blackMode ? 'text-white' : 'text-black'}>Total</span>
-            <span className={blackMode ? 'text-white' : 'text-black'}>
+            <span className="">Total</span>
+            <span className="">
               {formatCurrency(total, invoiceDetails.currency)}
             </span>
           </div>
@@ -550,9 +512,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
         <button
           onClick={() => handleSubmit('send')}
           disabled={isSubmitting}
-          className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md ${
-            blackMode ? 'text-black bg-white hover:bg-gray-200' : 'text-white bg-black hover:bg-gray-900'
-          } transition-colors duration-200`}
+          className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md  transition-colors duration-200`}
         >
           <Send className="h-4 w-4 mr-2" />
           {isSubmitting ? 'Sending...' : 'Preview Invoice'}
@@ -560,9 +520,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
         <button
           onClick={() => handleSubmit('download')}
           disabled={isSubmitting}
-          className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md ${
-            blackMode ? 'text-black bg-white hover:bg-gray-200' : 'text-white bg-black hover:bg-gray-900'
-          } transition-colors duration-200`}
+          className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md transition-colors duration-200`}
         >
           <Download className="h-4 w-4 mr-2" />
           {isSubmitting ? 'Generating...' : 'Download PDF'}
