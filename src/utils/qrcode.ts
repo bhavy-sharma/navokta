@@ -1,63 +1,23 @@
 import QRCode from 'qrcode';
 
-const createPayPalPaymentUrl = (
+export const generateUPIQRCode = async (
   amount: number,
-  currency: string,
-  paypalMe: string | undefined,
-  invoiceNumber: string
-): string => {
-  if (!paypalMe) {
-    throw new Error('PayPal.me link is required');
-  }
-
-  // Extract username from PayPal.me link
-  const username = paypalMe.replace(/^https?:\/\/(www\.)?paypal\.me\//i, '').split('/')[0];
-  if (!username) {
-    throw new Error('Invalid PayPal.me link');
-  }
-
-  // Create the payment URL
-  const baseUrl = `https://paypal.me/${username}`;
-  const paymentUrl = `${baseUrl}/${amount.toFixed(2)}${currency}`;
-  const note = `?note=Invoice ${invoiceNumber}`;
-  
-  return `${paymentUrl}${note}`;
-};
-
-export const generatePaymentQRCode = async (
-  amount: number,
-  currency: string,
-  invoiceNumber: string,
-  paypalMe?: string
+  invoiceId: string
 ): Promise<string> => {
+  const upiId = 'bank.bhavy@okhdfcbank';
+  const name = 'Bhavy Sharma';
+
+  const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount.toFixed(2)}&cu=INR&tn=Invoice+${invoiceId}`;
+
   try {
-    if (!paypalMe) {
-      console.warn('No PayPal.me link provided');
-      return '';
-    }
-
-    // Create PayPal.me payment URL
-    const paypalUrl = createPayPalPaymentUrl(
-      amount,
-      currency,
-      paypalMe,
-      invoiceNumber
-    );
-
-    // Generate QR code with better error correction
-    const qrCodeDataUrl = await QRCode.toDataURL(paypalUrl, {
+    const qr = await QRCode.toDataURL(upiLink, {
       width: 300,
       margin: 2,
       errorCorrectionLevel: 'H',
-      color: {
-        dark: '#000000',
-        light: '#ffffff',
-      },
     });
-
-    return qrCodeDataUrl;
+    return qr;
   } catch (error) {
-    console.error('Error generating QR code:', error);
+    console.error('QR generation failed:', error);
     return '';
   }
 };

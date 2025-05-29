@@ -2,7 +2,7 @@ import React from 'react';
 import { Download, Send, PenSquare } from 'lucide-react';
 import { InvoiceData } from '../types';
 import { downloadPDF } from '../utils/pdf';
-import { generatePaymentQRCode } from '../utils/qrcode';
+import { generateUPIQRCode } from '../utils/qrcode';
 import { formatCurrency } from '../utils/currencies';
 import toast from 'react-hot-toast';
 
@@ -18,11 +18,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
   React.useEffect(() => {
     const generateQR = async () => {
       if (data) {
-        const qrCodeData = await generatePaymentQRCode(
+        const qrCodeData = await generateUPIQRCode(
           data.total,
-          data.invoiceDetails.currency,
-          data.invoiceDetails.number,
-          data.businessInfo.paypalMe
+          data.invoiceDetails.number
         );
         setQrCode(qrCodeData);
       }
@@ -72,9 +70,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
           <button
             onClick={onEdit}
             className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md ${
-              blackMode
-                ? 'text-white bg-black hover:bg-white hover:text-black'
-                : 'text-black bg-white hover:bg-black hover:text-white'
+              blackMode ? 'text-white bg-black hover:bg-white hover:text-black' : 'text-black bg-white hover:bg-black hover:text-white'
             } transition-colors duration-200`}
           >
             <PenSquare className="h-4 w-4 mr-2" />
@@ -100,7 +96,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
           </button>
         </div>
 
-        {/* Preview Header */}
+        {/* Header */}
         <div className="border-b border-black pb-8 mb-8">
           <div className="flex justify-between items-start">
             <div>
@@ -116,7 +112,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
           </div>
         </div>
 
-        {/* Business & Client Info */}
+        {/* From & To */}
         <div className="grid grid-cols-2 gap-8 mb-8">
           <div>
             <h2 className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'} mb-2`}>From</h2>
@@ -136,69 +132,54 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
           </div>
         </div>
 
-        {/* Line Items */}
+        {/* Items */}
         <table className="min-w-full mb-8">
           <thead>
-  <tr className="border-b border-black">
-    <th className={`text-center py-3 px-4 ${blackMode ? 'text-white' : 'text-black'} text-sm font-semibold`}>Description</th>
-    <th className={`text-center py-3 px-4 ${blackMode ? 'text-white' : 'text-black'} text-sm font-semibold`}>Quantity</th>
-    <th className={`text-center py-3 px-4 ${blackMode ? 'text-white' : 'text-black'} text-sm font-semibold`}>Unit Price</th>
-    <th className={`text-center py-3 px-4 ${blackMode ? 'text-white' : 'text-black'} text-sm font-semibold`}>Total</th>
-  </tr>
-</thead>
-
+            <tr className="border-b border-black">
+              <th className={`text-center py-3 px-4 ${blackMode ? 'text-white' : 'text-black'} text-sm font-semibold`}>Description</th>
+              <th className={`text-center py-3 px-4 ${blackMode ? 'text-white' : 'text-black'} text-sm font-semibold`}>Quantity</th>
+              <th className={`text-center py-3 px-4 ${blackMode ? 'text-white' : 'text-black'} text-sm font-semibold`}>Unit Price</th>
+              <th className={`text-center py-3 px-4 ${blackMode ? 'text-white' : 'text-black'} text-sm font-semibold`}>Total</th>
+            </tr>
+          </thead>
           <tbody>
             {data.lineItems.map((item, index) => (
               <tr key={index} className="border-b border-black/20">
                 <td className={`py-4 px-4 ${blackMode ? 'text-white' : 'text-black'}`}>{item.description}</td>
                 <td className={`py-4 px-4 text-right ${blackMode ? 'text-white' : 'text-black'}`}>{item.quantity}</td>
-                <td className={`py-4 px-4 text-right ${blackMode ? 'text-white' : 'text-black'}`}>
-                  {formatCurrency(item.unitPrice, data.invoiceDetails.currency)}
-                </td>
-                <td className={`py-4 px-4 text-right ${blackMode ? 'text-white' : 'text-black'}`}>
-                  {formatCurrency(item.total, data.invoiceDetails.currency)}
-                </td>
+                <td className={`py-4 px-4 text-right ${blackMode ? 'text-white' : 'text-black'}`}>{formatCurrency(item.unitPrice, data.invoiceDetails.currency)}</td>
+                <td className={`py-4 px-4 text-right ${blackMode ? 'text-white' : 'text-black'}`}>{formatCurrency(item.total, data.invoiceDetails.currency)}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* Summary and QR Code */}
+        {/* Summary + QR */}
         <div className="border-t border-black pt-8 flex justify-between items-start">
           <div className="w-64">
             <div className="flex justify-between mb-2">
               <span className={blackMode ? 'text-white' : 'text-black'}>Subtotal</span>
-              <span className={blackMode ? 'text-white' : 'text-black'}>
-                {formatCurrency(data.subtotal, data.invoiceDetails.currency)}
-              </span>
+              <span className={blackMode ? 'text-white' : 'text-black'}>{formatCurrency(data.subtotal, data.invoiceDetails.currency)}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span className={blackMode ? 'text-white' : 'text-black'}>Tax ({data.taxRate}%)</span>
-              <span className={blackMode ? 'text-white' : 'text-black'}>
-                {formatCurrency(data.taxAmount, data.invoiceDetails.currency)}
-              </span>
+              <span className={blackMode ? 'text-white' : 'text-black'}>{formatCurrency(data.taxAmount, data.invoiceDetails.currency)}</span>
             </div>
             <div className="flex justify-between border-t border-black pt-2 mt-2">
               <span className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'}`}>Total</span>
-              <span className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'}`}>
-                {formatCurrency(data.total, data.invoiceDetails.currency)}
-              </span>
+              <span className={`text-lg font-semibold ${blackMode ? 'text-white' : 'text-black'}`}>{formatCurrency(data.total, data.invoiceDetails.currency)}</span>
             </div>
           </div>
-          
+
           {/* QR Code */}
           {qrCode && (
             <div className="text-center">
               <h3 className={`text-sm font-medium mb-2 ${blackMode ? 'text-white' : 'text-black'}`}>
-                Scan to Pay with PayPal
+                Scan to Pay with UPI
               </h3>
-              <img
-                src={qrCode}
-                alt="Payment QR Code"
-                className="w-32 h-32 mx-auto"
-              />
+              <img src={qrCode} alt="UPI QR Code" className="w-32 h-32 mx-auto" />
               <p className={`text-xs mt-2 ${blackMode ? 'text-white/70' : 'text-black/70'}`}>
-                Scan with your PayPal app
+                Use Google Pay, PhonePe, Paytm or any UPI app
               </p>
             </div>
           )}
