@@ -4,10 +4,11 @@ export const generateUPIQRCode = async (
   amount: number,
   invoiceId: string
 ): Promise<string> => {
-  const upiId = 'bank.bhavy@okhdfcbank';
+  const upiId = '8307233996@jio';  
   const name = 'Bhavy Sharma';
 
-  const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount.toFixed(2)}&cu=INR&tn=Invoice+${invoiceId}`;
+  // Construct UPI payment URI with encoded parameters
+  const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount.toFixed(2)}&cu=INR&tn=Invoice+${encodeURIComponent(invoiceId)}`;
 
   try {
     const qr = await QRCode.toDataURL(upiLink, {
