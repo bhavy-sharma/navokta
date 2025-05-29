@@ -16,3 +16,12 @@
 body {
   overflow-y: auto;
 }
+
+.noprint {
+  display: none;
+  width: 100%;
+}
+
+.print {
+  width: 100%;
+}

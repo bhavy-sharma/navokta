@@ -1,33 +1,16 @@
 import React from 'react';
-import { Download, Send, PenSquare } from 'lucide-react';
+import { PenSquare } from 'lucide-react';
 import { InvoiceData } from '../types';
-import { downloadPDF } from '../utils/pdf';
-import { generateUPIQRCode } from '../utils/qrcode';
 import { formatCurrency } from '../utils/currencies';
-import toast from 'react-hot-toast';
 
 interface InvoicePreviewProps {
   data: InvoiceData | null;
   onEdit: () => void;
   blackMode: boolean;
+  qrCode: string;
 }
 
-const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode }) => {
-  const [qrCode, setQrCode] = React.useState<string>('');
-
-  React.useEffect(() => {
-    const generateQR = async () => {
-      if (data) {
-        const qrCodeData = await generateUPIQRCode(
-          data.total,
-          data.invoiceDetails.number
-        );
-        setQrCode(qrCodeData);
-      }
-    };
-    generateQR();
-  }, [data]);
-
+const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode, qrCode }) => {
   if (!data) {
     return (
       <div className={`${blackMode ? 'bg-black' : 'bg-white'} border border-black rounded-lg p-6 text-center`}>
@@ -45,57 +28,9 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
     );
   }
 
-  const handleDownload = async () => {
-    try {
-      downloadPDF({ ...data, qrCode });
-      toast.success('PDF downloaded successfully');
-    } catch (error) {
-      toast.error('Failed to download PDF');
-      console.error('Error downloading PDF:', error);
-    }
-  };
-
-  const handleSendEmail = () => {
-    const subject = encodeURIComponent(`Invoice ${data.invoiceDetails.number} from ${data.businessInfo.name}`);
-    const body = encodeURIComponent(`Dear ${data.clientInfo.name},\n\nPlease find attached the invoice ${data.invoiceDetails.number}.\n\nBest regards,\n${data.businessInfo.name}`);
-    const mailtoLink = `mailto:${data.clientInfo.email}?subject=${subject}&body=${body}`;
-    window.location.href = mailtoLink;
-  };
-
   return (
     <div className={`${blackMode ? 'bg-black' : 'bg-white'} border border-black rounded-lg p-6`}>
       <div className="max-w-4xl mx-auto">
-        {/* Actions */}
-        <div className="flex justify-end space-x-4 mb-8">
-          <button
-            onClick={onEdit}
-            className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md ${
-              blackMode ? 'text-white bg-black hover:bg-white hover:text-black' : 'text-black bg-white hover:bg-black hover:text-white'
-            } transition-colors duration-200`}
-          >
-            <PenSquare className="h-4 w-4 mr-2" />
-            Edit
-          </button>
-          <button
-            onClick={handleSendEmail}
-            className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md ${
-              blackMode ? 'text-black bg-white hover:bg-gray-200' : 'text-white bg-black hover:bg-gray-900'
-            } transition-colors duration-200`}
-          >
-            <Send className="h-4 w-4 mr-2" />
-            Send Email
-          </button>
-          <button
-            onClick={handleDownload}
-            className={`inline-flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md ${
-              blackMode ? 'text-black bg-white hover:bg-gray-200' : 'text-white bg-black hover:bg-gray-900'
-            } transition-colors duration-200`}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download
-          </button>
-        </div>
-
         {/* Header */}
         <div className="border-b border-black pb-8 mb-8">
           <div className="flex justify-between items-start">
@@ -154,7 +89,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
           </tbody>
         </table>
 
-        {/* Summary + QR */}
+        {/* Summary + QR Code */}
         <div className="border-t border-black pt-8 flex justify-between items-start">
           <div className="w-64">
             <div className="flex justify-between mb-2">
@@ -171,21 +106,15 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
             </div>
           </div>
 
-          {/* QR Code */}
           {qrCode && (
             <div className="text-center">
-              <h3 className={`text-sm font-medium mb-2 ${blackMode ? 'text-white' : 'text-black'}`}>
-                Scan to Pay with UPI
-              </h3>
+              <h3 className={`text-sm font-medium mb-2 ${blackMode ? 'text-white' : 'text-black'}`}>Scan to Pay with UPI</h3>
               <img src={qrCode} alt="UPI QR Code" className="w-32 h-32 mx-auto" />
-              <p className={`text-xs mt-2 ${blackMode ? 'text-white/70' : 'text-black/70'}`}>
-                Use Google Pay, PhonePe, Paytm or any UPI app
-              </p>
+              <p className={`text-xs mt-2 ${blackMode ? 'text-white/70' : 'text-black/70'}`}>Use Google Pay, PhonePe, Paytm or any UPI app</p>
             </div>
           )}
         </div>
 
-        {/* Notes */}
         {data.invoiceDetails.notes && (
           <div className="mt-8">
             <h2 className={`text-lg font-semibold mb-2 ${blackMode ? 'text-white' : 'text-black'}`}>Notes</h2>
@@ -193,7 +122,6 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onEdit, blackMode
           </div>
         )}
 
-        {/* Footer */}
         <div className={`mt-12 text-center text-sm ${blackMode ? 'text-white' : 'text-black'}`}>
           <p>Thank you for your business!</p>
           <p>Payment is due within 30 days</p>

@@ -116,11 +116,11 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
     if (!businessInfo.name) newErrors.business_name = 'Business name is required';
     if (!businessInfo.email) newErrors.business_email = 'Business email is required';
     if (!businessInfo.address) newErrors.business_address = 'Business address is required';
-    if (!businessInfo.paypalMe) {
-      newErrors.business_paypalMe = 'PayPal.me link is required';
-    } else if (!businessInfo.paypalMe.match(/^https?:\/\/(www\.)?paypal\.me\/[a-zA-Z0-9-]+\/?$/)) {
-      newErrors.business_paypalMe = 'Invalid PayPal.me link format (e.g., https://paypal.me/username)';
-    }
+    // if (!businessInfo.paypalMe) {
+    //   newErrors.business_paypalMe = 'PayPal.me link is required';
+    // } else if (!businessInfo.paypalMe.match(/^https?:\/\/(www\.)?paypal\.me\/[a-zA-Z0-9-]+\/?$/)) {
+    //   newErrors.business_paypalMe = 'Invalid PayPal.me link format (e.g., https://paypal.me/username)';
+    // }
 
     if (!clientInfo.name) newErrors.client_name = 'Client name is required';
     if (!clientInfo.email) newErrors.client_email = 'Client email is required';
@@ -218,10 +218,10 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
             )}
           </div>
           <div>
-            <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
+            {/* <label className={`block text-sm font-medium ${blackMode ? 'text-white' : 'text-black'}`}>
               PayPal.me Link
-            </label>
-            <input
+            </label> */}
+            {/* <input
               type="text"
               value={businessInfo.paypalMe}
               onChange={(e) => handleBusinessInfoChange('paypalMe', e.target.value)}
@@ -229,7 +229,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, initialData, blackM
               className={`mt-1 block w-full rounded-md border-black focus:ring-black focus:border-black sm:text-sm ${
                 blackMode ? 'bg-black text-white' : 'bg-white text-black'
               } ${errors.business_paypalMe ? 'border-red-500' : ''}`}
-            />
+            /> */}
             {errors.business_paypalMe && (
               <p className="mt-1 text-sm text-red-600">{errors.business_paypalMe}</p>
             )}

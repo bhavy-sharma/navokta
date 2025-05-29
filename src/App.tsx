@@ -1,90 +1,94 @@
-import React, { useState } from 'react';
-import { FileText, Moon, Sun } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { FileText, Moon, Sun, Download, Send, PenSquare } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import InvoiceForm from './components/InvoiceForm';
 import InvoicePreview from './components/InvoicePreview';
 import { InvoiceData } from './types';
 import { sampleInvoiceData } from './utils/sampleData';
+import { downloadPDF } from './utils/pdf';
+import { generateUPIQRCode } from './utils/qrcode';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'form' | 'preview'>('form');
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(sampleInvoiceData);
   const [blackMode, setBlackMode] = useState(false);
+  const [qrCode, setQrCode] = useState<string>('');
+  const [hideHeader, setHideHeader] = useState(false);
+
+
+  useEffect(() => {
+    const fetchQR = async () => {
+      if (invoiceData) {
+        const qr = await generateUPIQRCode(invoiceData.total, invoiceData.invoiceDetails.number);
+        setQrCode(qr);
+      }
+    };
+    fetchQR();
+  }, [invoiceData]);
+
+const handlePrint = () => {
+  setHideHeader(true); // Add 'noprint' class
+  setTimeout(() => {
+    window.print();
+    setHideHeader(false); // Remove class after printing
+  }, 100); // delay to ensure DOM updates
+};
+
+
+  const handleSendEmail = () => {
+    if (!invoiceData) return;
+    const subject = encodeURIComponent(`Invoice ${invoiceData.invoiceDetails.number} from ${invoiceData.businessInfo.name}`);
+    const body = encodeURIComponent(`Dear ${invoiceData.clientInfo.name},\n\nPlease find attached the invoice ${invoiceData.invoiceDetails.number}.\n\nBest regards,\n${invoiceData.businessInfo.name}`);
+    const mailtoLink = `mailto:${invoiceData.clientInfo.email}?subject=${subject}&body=${body}`;
+    window.location.href = mailtoLink;
+  };
 
   const handleInvoiceDataUpdate = (data: InvoiceData) => {
     setInvoiceData(data);
-    if (activeTab === 'form') {
-      setActiveTab('preview');
-    }
+    if (activeTab === 'form') setActiveTab('preview');
   };
 
   return (
     <div className={`min-h-screen ${blackMode ? 'bg-black' : 'bg-white'}`}>
       <Toaster position="top-right" />
-      
-      {/* Header */}
-      <header className={`${blackMode ? 'bg-black' : 'bg-white'} border-b border-black`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <FileText className={`h-8 w-8 ${blackMode ? 'text-white' : 'text-black'}`} />
-              <h1 className={`ml-2 text-2xl font-semibold ${blackMode ? 'text-white' : 'text-black'}`}>
-                Invoice Generator
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setBlackMode(!blackMode)}
-                className={`px-4 py-2 rounded-md border border-black flex items-center space-x-2 ${
-                  blackMode
-                    ? 'bg-black text-white hover:bg-white hover:text-black'
-                    : 'bg-white text-black hover:bg-black hover:text-white'
-                } transition-colors duration-200`}
-                title={blackMode ? 'Switch to regular mode' : 'Switch to "under the table" mode 🤫'}
-              >
-                {blackMode ? (
-                  <>
-                    <Sun className="h-4 w-4" />
-                    <span>Regular Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-4 w-4" />
-                    <span>Black Mode 🤫</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('form')}
-                className={`px-4 py-2 rounded-md border ${
-                  activeTab === 'form'
-                    ? 'bg-black text-white border-black'
-                    : `${blackMode ? 'bg-black text-white' : 'bg-white text-black'} border-black hover:bg-black hover:text-white`
-                } transition-colors duration-200`}
-              >
-                Form
-              </button>
-              <button
-                onClick={() => setActiveTab('preview')}
-                className={`px-4 py-2 rounded-md border ${
-                  activeTab === 'preview'
-                    ? 'bg-black text-white border-black'
-                    : `${blackMode ? 'bg-black text-white' : 'bg-white text-black'} border-black hover:bg-black hover:text-white`
-                } transition-colors duration-200`}
-              >
-                Preview
-              </button>
-            </div>
+     <header className={`${blackMode ? 'bg-black' : 'bg-white'} border-b border-black ${hideHeader ? 'noprint' : ''}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="flex items-center">
+            <FileText className={`h-8 w-8 ${blackMode ? 'text-white' : 'text-black'}`} />
+            <h1 className={`ml-2 text-2xl font-semibold ${blackMode ? 'text-white' : 'text-black'}`}>
+              Invoice Generator
+            </h1>
+          </div>
+          <div className="flex space-x-4">
+
+            <button
+              onClick={() => setActiveTab('form')}
+              className="flex items-center px-4 py-2 border border-black text-sm font-medium rounded-md text-black bg-white hover:bg-black hover:text-white"
+            >
+              <PenSquare className="h-4 w-4 mr-2" />
+              Edit Form
+            </button>
+            <button onClick={handlePrint} className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+  Print Invoice
+</button>
+            <button onClick={handleSendEmail} className="px-4 py-2 bg-blue-600 text-white rounded-md flex items-center">
+              <Send className="w-4 h-4 mr-2" /> Send Email
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="p-6 max-w-5xl mx-auto">
         {activeTab === 'form' ? (
-          <InvoiceForm onSubmit={handleInvoiceDataUpdate} initialData={invoiceData} blackMode={blackMode} />
+          <InvoiceForm initialData={invoiceData} onSubmit={handleInvoiceDataUpdate} blackMode={blackMode} />
         ) : (
-          <InvoicePreview data={invoiceData} onEdit={() => setActiveTab('form')} blackMode={blackMode} />
+          <InvoicePreview
+            data={invoiceData}
+            onEdit={() => setActiveTab('form')}
+            blackMode={blackMode}
+            qrCode={qrCode}
+          />
         )}
       </main>
     </div>
