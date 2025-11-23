@@ -16,6 +16,7 @@ import {
 import SignatureCanvas from 'react-signature-canvas';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import Image from 'next/image';
 
 export default function CreateInvoicePage() {
   const [billFrom, setBillFrom] = useState({
@@ -250,7 +251,7 @@ export default function CreateInvoicePage() {
 };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4 md:p-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4 md:p-6">
       {/* HIDDEN PRINT AREA - SAFE FOR PDF */}
       <div id="print-area" style={{ position: 'fixed', left: '-9999px', top: 0, width: '800px' }}></div>
 
@@ -278,7 +279,7 @@ export default function CreateInvoicePage() {
                 </label>
                 {logoPreview && (
                   <div className="relative">
-                    <img src={logoPreview} alt="Logo" className="h-12 w-12 object-contain rounded border-2 border-blue-500" />
+                    <Image src={logoPreview} alt="Logo" className="h-12 w-12 object-contain rounded border-2 border-blue-500" />
                     <button onClick={() => setLogoPreview(null)} className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600">
                       <X size={12} />
                     </button>
@@ -374,7 +375,7 @@ export default function CreateInvoicePage() {
         {/* ===== LIVE PREVIEW ===== */}
         <div className="w-full lg:w-1/2">
           <div className="bg-slate-800 rounded-xl shadow-2xl border border-slate-700 overflow-hidden sticky top-6">
-            <div className="p-5 bg-gradient-to-r from-blue-600 to-purple-600 border-b border-slate-700">
+            <div className="p-5 bg-linear-to-r from-blue-600 to-purple-600 border-b border-slate-700">
               <h2 className="text-xl font-bold flex items-center gap-2 text-white">
                 <FileText size={22} /> Live Invoice Preview
               </h2>
@@ -387,7 +388,7 @@ export default function CreateInvoicePage() {
               >
                 {logoPreview && (
                   <div className="text-center mb-6">
-                    <img src={logoPreview} alt="Company Logo" className="h-16 mx-auto object-contain" />
+                    <Image src={logoPreview} alt="Company Logo" className="h-16 mx-auto object-contain" />
                   </div>
                 )}
 
@@ -487,14 +488,14 @@ export default function CreateInvoicePage() {
                 {signatureImage && (
                   <div className="mb-6">
                     <h4 className="font-bold text-gray-900 mb-2">Authorized Signature:</h4>
-                    <img src={signatureImage} alt="Signature" className="h-12" />
+                    <Image src={signatureImage} alt="Signature" className="h-12" />
                   </div>
                 )}
 
-                <div className="text-center mt-8 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border-2 border-blue-300">
+                <div className="text-center mt-8 p-6 bg-linear-to-br from-blue-50 to-purple-50 rounded-lg border-2 border-blue-300">
                   <h4 className="font-bold text-gray-900 mb-3 text-lg">💳 Scan to Pay via UPI</h4>
                   <div className="inline-block p-3 bg-white rounded-lg border-2 border-gray-300 shadow-md">
-                    <img
+                    <Image
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`}
                       alt="Payment QR"
                       className="w-36 h-36"
@@ -508,7 +509,7 @@ export default function CreateInvoicePage() {
               <div className="mt-6 space-y-3">
                 <button
                   onClick={exportToPDF}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold flex items-center gap-2 justify-center transition shadow-lg"
+                  className="w-full px-4 py-3 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold flex items-center gap-2 justify-center transition shadow-lg"
                 >
                   <Download size={20} /> Download as PDF
                 </button>
@@ -517,7 +518,7 @@ export default function CreateInvoicePage() {
                   href={upiLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg font-semibold text-center transition shadow-lg"
+                  className="block w-full px-4 py-3 bg-linear-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg font-semibold text-center transition shadow-lg"
                 >
                   <div className="flex items-center gap-2 justify-center">
                     <CreditCard size={20} /> Pay ₹{total.toFixed(2)} via UPI
@@ -539,7 +540,7 @@ export default function CreateInvoicePage() {
       {showSignatureModal && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-xl w-full max-w-3xl border-2 border-blue-500 shadow-2xl">
-            <div className="p-5 bg-gradient-to-r from-blue-600 to-purple-600 flex justify-between items-center">
+            <div className="p-5 bg-linear-to-r from-blue-600 to-purple-600 flex justify-between items-center">
               <h3 className="text-xl font-bold text-white">✍️ Sign Your Invoice</h3>
               <button onClick={() => setShowSignatureModal(false)} className="text-white hover:text-gray-200 transition">
                 <X size={28} />
