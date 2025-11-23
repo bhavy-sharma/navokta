@@ -95,10 +95,10 @@ export default function CreateInvoicePage() {
         {/* ===== FORM ===== */}
         <div className="w-full lg:w-1/2 space-y-6">
           <Card title="Bill From" icon={<Building className="text-indigo-400" />}>
-            <ReadOnlyField label="Company Name" value={billFrom.name} icon={<Building size={16} />} />
+            <ReadOnlyField label="Company Name" value={billFrom.name} />
             <ReadOnlyField label="Address" value={billFrom.address} />
-            <ReadOnlyField label="Email" value={billFrom.email} icon={<Mail size={16} />} />
-            <ReadOnlyField label="Phone" value={billFrom.phone} icon={<Phone size={16} />} />
+            <ReadOnlyField label="Email" value={billFrom.email}  />
+            <ReadOnlyField label="Phone" value={billFrom.phone}  />
           </Card>
 
           <Card title="Bill To" icon={<User className="text-indigo-400" />}>
