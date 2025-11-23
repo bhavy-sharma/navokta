@@ -87,7 +87,7 @@ export default function CreateInvoicePage() {
   return (
     <div className="min-h-screen bg-slate-900 text-white p-4 md:p-6">
       <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-white">Professional Invoice Generator</h1>
+        <h1 className="text-3xl font-bold text-white">Navokta Invoice Generator</h1>
         <p className="text-slate-400 mt-2">Create, export & share beautiful invoices instantly.</p>
       </header>
 
@@ -106,7 +106,7 @@ export default function CreateInvoicePage() {
               label="Client Name"
               value={billTo.name}
               onChange={(e) => setBillTo({ ...billTo, name: e.target.value })}
-              icon={<User size={16} />}
+              // icon={<User size={16} />}
             />
             <InputField
               label="Address"
@@ -117,13 +117,13 @@ export default function CreateInvoicePage() {
               label="Email"
               value={billTo.email}
               onChange={(e) => setBillTo({ ...billTo, email: e.target.value })}
-              icon={<Mail size={16} />}
+              // icon={<Mail size={16} />}
             />
             <InputField
               label="Phone"
               value={billTo.phone}
               onChange={(e) => setBillTo({ ...billTo, phone: e.target.value })}
-              icon={<Phone size={16} />}
+              // icon={<Phone size={16} />}
             />
           </Card>
 
