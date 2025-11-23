@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Building,
   User,
@@ -20,7 +20,6 @@ import {
   PenTool,
   X,
 } from 'lucide-react';
-import { QRCodeCanvas } from 'qrcode.react';
 import SignatureCanvas from 'react-signature-canvas';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -112,51 +111,29 @@ export default function CreateInvoicePage() {
     setShowSignatureModal(false);
   };
 
-  // --- PDF Export — 100% WORKING — NO LAB ERROR ---
+  // --- PDF Export — FINAL FIX — SINGLE PAGE + QR + NO DUPLICATE ---
   const exportPDF = async () => {
     const element = document.getElementById('invoice-export-container');
     if (!element) return;
 
-    try {
-      // Wait for QR to render as canvas (critical for html2canvas)
-      await new Promise(resolve => setTimeout(resolve, 300));
+    // Give time for external image (QR) to load
+    await new Promise(r => setTimeout(r, 600));
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
-      });
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210; // A4 width
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      // Only add extra pages if content exceeds A4 height (~297mm)
-      if (imgHeight > 297) {
-        let heightLeft = imgHeight;
-        let position = 0;
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight + 297;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= 297;
-        }
-      } else {
-        // Single page
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      }
-
-      pdf.save(`invoice-${displayInvoiceNumber}.pdf`);
-    } catch (err) {
-      console.error('PDF error:', err);
-      alert('PDF export failed. Try again.');
-    }
+    // ✅ SINGLE PAGE ONLY — NO DUPLICATION
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, Math.min(imgHeight, 297));
+    pdf.save(`invoice-${displayInvoiceNumber}.pdf`);
   };
 
   return (
@@ -211,7 +188,7 @@ export default function CreateInvoicePage() {
               <InputField label="Invoice Number" value={invoiceDetails.invoiceNumber} onChange={(e) => setInvoiceDetails({ ...invoiceDetails, invoiceNumber: e.target.value })} placeholder="Leave blank for auto" />
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Currency</label>
-                <div className="px-3 py-2.5 bg-slate-800 rounded-lg border border-slate-700 text-white">INR (₹) — Fixed</div>
+                <div className="px-3 py-2.5 bg-slate-800 rounded-lg border border-slate-700 text-white">INR (Rs.) — Fixed</div>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -227,7 +204,7 @@ export default function CreateInvoicePage() {
                 <InputField label="Description" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} />
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <InputField label="Qty" type="number" min="1" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} />
-                  <InputField label="Rate (₹)" type="number" step="0.01" min="0" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} />
+                  <InputField label="Rate (Rs.)" type="number" step="0.01" min="0" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} />
                 </div>
                 <button type="button" className="mt-3 flex items-center gap-1 text-rose-500 hover:text-rose-400" onClick={() => removeItem(item.id)}>
                   <Trash2 size={16} /> Remove Item
@@ -240,9 +217,9 @@ export default function CreateInvoicePage() {
           </Card>
 
           <Card title="Summary" icon={<IndianRupee className="text-indigo-400" />}>
-            <InputField label="Discount (₹)" type="number" step="0.01" min="0" value={summary.discount} onChange={(e) => setSummary({ ...summary, discount: parseFloat(e.target.value) || 0 })} />
+            <InputField label="Discount (Rs.)" type="number" step="0.01" min="0" value={summary.discount} onChange={(e) => setSummary({ ...summary, discount: parseFloat(e.target.value) || 0 })} />
             <InputField label="Tax (%)" type="number" step="0.1" min="0" max="100" value={summary.tax} onChange={(e) => setSummary({ ...summary, tax: parseFloat(e.target.value) || 0 })} />
-            <InputField label="Shipping (₹)" type="number" step="0.01" min="0" value={summary.shipping} onChange={(e) => setSummary({ ...summary, shipping: parseFloat(e.target.value) || 0 })} />
+            <InputField label="Shipping (Rs.)" type="number" step="0.01" min="0" value={summary.shipping} onChange={(e) => setSummary({ ...summary, shipping: parseFloat(e.target.value) || 0 })} />
           </Card>
         </div>
 
@@ -255,13 +232,13 @@ export default function CreateInvoicePage() {
               </h2>
             </div>
             <div className="p-5">
-              {/* ✅ 100% PDF-SAFE — NO TAILWIND COLOR CLASSES INSIDE */}
+              {/* ✅ 100% PDF-SAFE — NO TAILWIND, SAFE FONTS, SAFE SYMBOLS */}
               <div
                 id="invoice-export-container"
                 style={{
                   backgroundColor: '#ffffff',
                   color: '#000000',
-                  fontFamily: 'Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+                  fontFamily: 'Arial, sans-serif', // PDF-safe font
                   padding: '24px',
                   borderRadius: '8px',
                   minHeight: '700px',
@@ -316,8 +293,8 @@ export default function CreateInvoicePage() {
                           {item.description && <div style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px' }}>{item.description}</div>}
                         </td>
                         <td style={{ textAlign: 'right', paddingTop: '12px', paddingBottom: '12px', color: '#1f2937' }}>{item.qty}</td>
-                        <td style={{ textAlign: 'right', paddingTop: '12px', paddingBottom: '12px', color: '#1f2937' }}>₹{Number(item.rate).toFixed(2)}</td>
-                        <td style={{ textAlign: 'right', paddingTop: '12px', paddingBottom: '12px', color: '#1f2937' }}>₹{(item.qty * item.rate).toFixed(2)}</td>
+                        <td style={{ textAlign: 'right', paddingTop: '12px', paddingBottom: '12px', color: '#1f2937' }}>Rs. {Number(item.rate).toFixed(2)}</td>
+                        <td style={{ textAlign: 'right', paddingTop: '12px', paddingBottom: '12px', color: '#1f2937' }}>Rs. {(item.qty * item.rate).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -326,29 +303,29 @@ export default function CreateInvoicePage() {
                 <div style={{ marginTop: '24px', fontSize: '14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                     <span style={{ color: '#1f2937' }}>Subtotal</span>
-                    <span style={{ color: '#1f2937' }}>₹{subtotal.toFixed(2)}</span>
+                    <span style={{ color: '#1f2937' }}>Rs. {subtotal.toFixed(2)}</span>
                   </div>
                   {summary.discount > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#ef4444' }}>
                       <span>Discount</span>
-                      <span>- ₹{summary.discount.toFixed(2)}</span>
+                      <span>- Rs. {summary.discount.toFixed(2)}</span>
                     </div>
                   )}
                   {summary.tax > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#1f2937' }}>
                       <span>Tax ({summary.tax}%)</span>
-                      <span>₹{taxAmount.toFixed(2)}</span>
+                      <span>Rs. {taxAmount.toFixed(2)}</span>
                     </div>
                   )}
                   {summary.shipping > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: '#1f2937' }}>
                       <span>Shipping</span>
-                      <span>₹{summary.shipping.toFixed(2)}</span>
+                      <span>Rs. {summary.shipping.toFixed(2)}</span>
                     </div>
                   )}
                   <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '12px', marginTop: '12px', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px', color: '#000000' }}>
                     <span>Total</span>
-                    <span>₹{total.toFixed(2)}</span>
+                    <span>Rs. {total.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -359,14 +336,25 @@ export default function CreateInvoicePage() {
                   </div>
                 )}
 
+                {/* ✅ QR CODE — SAFE IMAGE URL */}
                 <div style={{ marginTop: '32px', textAlign: 'center' }}>
                   <h4 style={{ fontWeight: 'bold', color: '#000000', marginBottom: '12px' }}>Scan to Pay</h4>
-                  <div style={{ display: 'inline-block', padding: '12px', backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-                    <div style={{ width: '120px', height: '120px' }}>
-                      <QRCodeCanvas value={upiLink} size={120} level="M" />
-                    </div>
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '12px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px'
+                  }}>
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(upiLink)}`}
+                      alt="Payment QR"
+                      style={{ width: '120px', height: '120px', display: 'block' }}
+                    />
                   </div>
-                  <p style={{ color: '#6b7280', fontSize: '13px', marginTop: '8px' }}>Scan with any UPI app to pay ₹{total.toFixed(2)}</p>
+                  <p style={{ color: '#6b7280', fontSize: '13px', marginTop: '8px' }}>
+                    Scan with any UPI app to pay Rs. {total.toFixed(2)}
+                  </p>
                 </div>
               </div>
 
