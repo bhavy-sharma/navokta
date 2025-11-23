@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
   Building,
   User,
@@ -14,18 +14,26 @@ import {
   Percent,
   Truck,
   FileText,
-  Share2,
   Download,
-  Save,
+  CreditCard,
+  Image as ImageIcon,
+  PenTool,
 } from 'lucide-react';
+import {QRCodeCanvas} from 'qrcode.react';
+import SignatureCanvas from 'react-signature-canvas';
 
 export default function CreateInvoicePage() {
-  const [billFrom] = useState({
+  const [billFrom, setBillFrom] = useState({
     name: 'Navokta Innovation',
     address: 'Haryana, India',
     email: 'navokta@gmail.com',
     phone: '+91 8307233996',
+    upiId: 'navokta@oksbi', // Default UPI
   });
+
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [showSignature, setShowSignature] = useState(false);
+  const signatureRef = useRef();
 
   const [billTo, setBillTo] = useState({
     name: '',
@@ -53,10 +61,7 @@ export default function CreateInvoicePage() {
     shipping: 0,
   });
 
-  // Auto-generate invoice number if blank
   const displayInvoiceNumber = invoiceDetails.invoiceNumber || `INV-${new Date().getFullYear()}-${String(items.length).padStart(3, '0')}`;
-
-  // --- Calculations (live) ---
   const subtotal = items.reduce((sum, item) => sum + item.qty * item.rate, 0);
   const discountAmount = summary.discount;
   const afterDiscount = subtotal - discountAmount;
@@ -84,6 +89,23 @@ export default function CreateInvoicePage() {
     );
   };
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setLogoPreview(ev.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearSignature = () => {
+    signatureRef.current?.clear();
+  };
+
+  // UPI Deep Link
+  const upiLink = `upi://pay?pa=${encodeURIComponent(billFrom.upiId)}&pn=${encodeURIComponent(billFrom.name)}&am=${total}&cu=INR&tn=Invoice%20${displayInvoiceNumber}`;
+  const upiUrl = `https://navokta-invoice.vercel.app/pay?upi=${encodeURIComponent(billFrom.upiId)}&amount=${total}&name=${encodeURIComponent(billFrom.name)}&note=${encodeURIComponent('Invoice ' + displayInvoiceNumber)}`;
+
   return (
     <div className="min-h-screen bg-slate-900 text-white p-4 md:p-6">
       <header className="mb-8 text-center">
@@ -95,36 +117,75 @@ export default function CreateInvoicePage() {
         {/* ===== FORM ===== */}
         <div className="w-full lg:w-1/2 space-y-6">
           <Card title="Bill From" icon={<Building className="text-indigo-400" />}>
-            <ReadOnlyField label="Company Name" value={billFrom.name} />
-            <ReadOnlyField label="Address" value={billFrom.address} />
-            <ReadOnlyField label="Email" value={billFrom.email}  />
-            <ReadOnlyField label="Phone" value={billFrom.phone}  />
+            <InputField label="Company Name" value={billFrom.name} onChange={(e) => setBillFrom({ ...billFrom, name: e.target.value })} />
+            <InputField label="Address" value={billFrom.address} onChange={(e) => setBillFrom({ ...billFrom, address: e.target.value })} />
+            <InputField label="Email" value={billFrom.email} onChange={(e) => setBillFrom({ ...billFrom, email: e.target.value })} />
+            <InputField label="Phone" value={billFrom.phone} onChange={(e) => setBillFrom({ ...billFrom, phone: e.target.value })} />
+            <InputField
+              label="UPI ID"
+              value={billFrom.upiId}
+              onChange={(e) => setBillFrom({ ...billFrom, upiId: e.target.value })}
+              placeholder="e.g. yourname@oksbi"
+              // icon={<CreditCard size={16} />}
+            />
+
+            {/* Logo Upload */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Company Logo</label>
+              <div className="flex items-center gap-3">
+                <label className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg cursor-pointer hover:bg-slate-700 flex items-center gap-2">
+                  <ImageIcon size={16} /> Upload Logo
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                </label>
+                {logoPreview && (
+                  <img src={logoPreview} alt="Logo" className="h-10 w-10 object-contain rounded border border-slate-600" />
+                )}
+              </div>
+            </div>
+
+            {/* Signature Toggle */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Digital Signature</label>
+              <button
+                type="button"
+                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 flex items-center gap-2"
+                onClick={() => setShowSignature(!showSignature)}
+              >
+                <PenTool size={16} /> {showSignature ? 'Hide Canvas' : 'Add Signature'}
+              </button>
+            </div>
+
+            {showSignature && (
+              <div className="mb-4 border border-slate-700 rounded-lg p-2 bg-slate-800">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-slate-300">Draw your signature</span>
+                  <button
+                    type="button"
+                    className="text-xs text-rose-500 hover:text-rose-400"
+                    onClick={clearSignature}
+                  >
+                    Clear
+                  </button>
+                </div>
+                <SignatureCanvas
+                  ref={signatureRef}
+                  penColor="white"
+                  canvasProps={{
+                    width: '100%',
+                    height: 120,
+                    className: 'border border-slate-600 rounded bg-slate-900',
+                  }}
+                />
+              </div>
+            )}
           </Card>
 
+          {/* ===== Rest of the form (Bill To, Items, etc.) ===== */}
           <Card title="Bill To" icon={<User className="text-indigo-400" />}>
-            <InputField
-              label="Client Name"
-              value={billTo.name}
-              onChange={(e) => setBillTo({ ...billTo, name: e.target.value })}
-              // icon={<User size={16} />}
-            />
-            <InputField
-              label="Address"
-              value={billTo.address}
-              onChange={(e) => setBillTo({ ...billTo, address: e.target.value })}
-            />
-            <InputField
-              label="Email"
-              value={billTo.email}
-              onChange={(e) => setBillTo({ ...billTo, email: e.target.value })}
-              // icon={<Mail size={16} />}
-            />
-            <InputField
-              label="Phone"
-              value={billTo.phone}
-              onChange={(e) => setBillTo({ ...billTo, phone: e.target.value })}
-              // icon={<Phone size={16} />}
-            />
+            <InputField label="Client Name" value={billTo.name} onChange={(e) => setBillTo({ ...billTo, name: e.target.value })} />
+            <InputField label="Address" value={billTo.address} onChange={(e) => setBillTo({ ...billTo, address: e.target.value })} />
+            <InputField label="Email" value={billTo.email} onChange={(e) => setBillTo({ ...billTo, email: e.target.value })} />
+            <InputField label="Phone" value={billTo.phone} onChange={(e) => setBillTo({ ...billTo, phone: e.target.value })} />
           </Card>
 
           <Card title="Invoice Details" icon={<FileText className="text-indigo-400" />}>
@@ -134,7 +195,6 @@ export default function CreateInvoicePage() {
                 value={invoiceDetails.invoiceNumber}
                 onChange={(e) => setInvoiceDetails({ ...invoiceDetails, invoiceNumber: e.target.value })}
                 placeholder="Leave blank for auto"
-                // icon={<Tag size={16} />}
               />
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Currency</label>
@@ -149,14 +209,12 @@ export default function CreateInvoicePage() {
                 type="date"
                 value={invoiceDetails.issueDate}
                 onChange={(e) => setInvoiceDetails({ ...invoiceDetails, issueDate: e.target.value })}
-                // icon={<Calendar size={16} />}
               />
               <InputField
                 label="Due Date"
                 type="date"
                 value={invoiceDetails.dueDate}
                 onChange={(e) => setInvoiceDetails({ ...invoiceDetails, dueDate: e.target.value })}
-                // icon={<Calendar size={16} />}
               />
             </div>
           </Card>
@@ -164,32 +222,11 @@ export default function CreateInvoicePage() {
           <Card title="Items" icon={<Plus className="text-indigo-400" />}>
             {items.map((item) => (
               <div key={item.id} className="bg-slate-800/50 p-4 rounded-lg mb-4 border border-slate-700">
-                <InputField
-                  label="Item Name"
-                  value={item.name}
-                  onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                />
-                <InputField
-                  label="Description"
-                  value={item.description}
-                  onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                />
+                <InputField label="Item Name" value={item.name} onChange={(e) => updateItem(item.id, 'name', e.target.value)} />
+                <InputField label="Description" value={item.description} onChange={(e) => updateItem(item.id, 'description', e.target.value)} />
                 <div className="grid grid-cols-2 gap-3 mt-3">
-                  <InputField
-                    label="Qty"
-                    type="number"
-                    min="1"
-                    value={item.qty}
-                    onChange={(e) => updateItem(item.id, 'qty', e.target.value)}
-                  />
-                  <InputField
-                    label="Rate (₹)"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={item.rate}
-                    onChange={(e) => updateItem(item.id, 'rate', e.target.value)}
-                  />
+                  <InputField label="Qty" type="number" min="1" value={item.qty} onChange={(e) => updateItem(item.id, 'qty', e.target.value)} />
+                  <InputField label="Rate (₹)" type="number" step="0.01" min="0" value={item.rate} onChange={(e) => updateItem(item.id, 'rate', e.target.value)} />
                 </div>
                 <button
                   type="button"
@@ -217,7 +254,6 @@ export default function CreateInvoicePage() {
               min="0"
               value={summary.discount}
               onChange={(e) => setSummary({ ...summary, discount: parseFloat(e.target.value) || 0 })}
-              // icon={<Percent size={16} />}
             />
             <InputField
               label="Tax (%)"
@@ -227,7 +263,6 @@ export default function CreateInvoicePage() {
               max="100"
               value={summary.tax}
               onChange={(e) => setSummary({ ...summary, tax: parseFloat(e.target.value) || 0 })}
-              // icon={<Percent size={16} />}
             />
             <InputField
               label="Shipping (₹)"
@@ -236,7 +271,6 @@ export default function CreateInvoicePage() {
               min="0"
               value={summary.shipping}
               onChange={(e) => setSummary({ ...summary, shipping: parseFloat(e.target.value) || 0 })}
-              // icon={<Truck size={16} />}
             />
           </Card>
         </div>
@@ -250,13 +284,20 @@ export default function CreateInvoicePage() {
               </h2>
             </div>
             <div className="p-5">
-              {/* PRINT-STYLE PREVIEW — WHITE BG, BLACK TEXT */}
-              <div className="bg-white text-black rounded-lg p-6 min-h-[650px] shadow-sm">
+              <div className="bg-white text-black rounded-lg p-6 min-h-[700px] shadow-sm">
+                {/* Logo */}
+                {logoPreview && (
+                  <div className="flex justify-center mb-4">
+                    <img src={logoPreview} alt="Company Logo" className="h-16 object-contain" />
+                  </div>
+                )}
+
                 <div className="flex justify-between mb-8">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">{billFrom.name}</h2>
                     <p className="text-gray-700 mt-1">{billFrom.address}</p>
                     <p className="text-gray-700">{billFrom.email} • {billFrom.phone}</p>
+                    <p className="text-gray-700">UPI: {billFrom.upiId}</p>
                   </div>
                   <div className="text-right">
                     <h3 className="text-xl font-bold text-gray-900">Invoice</h3>
@@ -300,26 +341,28 @@ export default function CreateInvoicePage() {
 
                 <div className="mt-6 text-sm">
                   <DetailRow label="Subtotal" value={`₹${subtotal.toFixed(2)}`} />
-                  {summary.discount > 0 && (
-                    <DetailRow label="Discount" value={`- ₹${summary.discount.toFixed(2)}`} className="text-red-600" />
-                  )}
-                  {summary.tax > 0 && (
-                    <DetailRow label={`Tax (${summary.tax}%)`} value={`₹${taxAmount.toFixed(2)}`} />
-                  )}
-                  {summary.shipping > 0 && (
-                    <DetailRow label="Shipping" value={`₹${summary.shipping.toFixed(2)}`} />
-                  )}
+                  {summary.discount > 0 && <DetailRow label="Discount" value={`- ₹${summary.discount.toFixed(2)}`} className="text-red-600" />}
+                  {summary.tax > 0 && <DetailRow label={`Tax (${summary.tax}%)`} value={`₹${taxAmount.toFixed(2)}`} />}
+                  {summary.shipping > 0 && <DetailRow label="Shipping" value={`₹${summary.shipping.toFixed(2)}`} />}
                   <div className="border-t border-gray-300 pt-3 mt-3 flex justify-between font-bold text-lg text-gray-900">
                     <span>Total</span>
                     <span>₹{total.toFixed(2)}</span>
                   </div>
                 </div>
+
+                {/* UPI QR Code */}
+                <div className="mt-8 text-center">
+                  <h4 className="font-bold text-gray-900 mb-2">Scan to Pay</h4>
+                  <div className="inline-block p-3 bg-white border border-gray-300 rounded-lg">
+                    <QRCodeCanvas value={upiLink} size={120} level="M" />
+                  </div>
+                  <p className="text-gray-600 text-sm mt-2">Scan with any UPI app to pay ₹{total.toFixed(2)}</p>
+                </div>
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <ActionButton icon={<Download size={18} />}>Export PDF</ActionButton>
-                <ActionButton icon={<Save size={18} />} variant="secondary">Save Draft</ActionButton>
-                <ActionButton icon={<Share2 size={18} />} variant="success">Share Link</ActionButton>
+                {/* Save Draft & Share Link removed as requested */}
               </div>
             </div>
           </div>
@@ -355,20 +398,6 @@ const InputField = ({ label, value, onChange, type = 'text', placeholder = '', i
   </div>
 );
 
-const ReadOnlyField = ({ label, value, icon = null }) => (
-  <div className="mb-4">
-    <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>
-    <div className="relative">
-      {icon && <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">{icon}</div>}
-      <div
-        className={`w-full px-3 py-2.5 pl-${icon ? '10' : '3'} bg-slate-800 border border-slate-700 rounded-lg text-white`}
-      >
-        {value || '—'}
-      </div>
-    </div>
-  </div>
-);
-
 const DetailRow = ({ label, value, className = 'text-gray-700' }) => (
   <div className="flex justify-between py-1">
     <span className={className}>{label}</span>
@@ -380,12 +409,6 @@ const ActionButton = ({ icon, children, variant = 'primary' }) => {
   const base = 'px-4 py-2.5 rounded-lg font-medium flex items-center gap-2 transition';
   const variants = {
     primary: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-    secondary: 'bg-slate-700 hover:bg-slate-600 text-white',
-    success: 'bg-emerald-600 hover:bg-emerald-700 text-white',
   };
-  return (
-    <button className={`${base} ${variants[variant]}`}>
-      {icon} {children}
-    </button>
-  );
+  return <button className={`${base} ${variants[variant]}`}>{icon} {children}</button>;
 };
