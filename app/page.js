@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Building,
   User,
@@ -89,48 +89,65 @@ export default function CreateInvoicePage() {
     }
   };
 
-  // ✅ PDF Export Function (REPLACED printInvoice)
+  // ✅ Fixed PDF Export (handles 'lab()' error)
   const exportToPDF = () => {
     const input = document.getElementById('invoice-preview');
-    if (!input) return;
+    if (!input) {
+      alert('Invoice preview not found!');
+      return;
+    }
 
-    // Temporarily set white background for PDF (in case of transparent areas)
-    const originalBg = input.style.backgroundColor;
-    input.style.backgroundColor = '#ffffff';
+    // Clone the element to avoid modifying live DOM
+    const clone = input.cloneNode(true);
+    clone.id = 'invoice-clone';
+    clone.style.opacity = '0';
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.backgroundColor = '#ffffff';
+    document.body.appendChild(clone);
 
-    html2canvas(input, {
+    // Force all text to use safe colors
+    const allTextElements = clone.querySelectorAll('*');
+    allTextElements.forEach(el => {
+      el.style.color = '#000000';
+      el.style.backgroundColor = 'transparent';
+    });
+
+    html2canvas(clone, {
       scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-    }).then((canvas) => {
-      input.style.backgroundColor = originalBg; // restore
+      ignoreCSSVariables: true, // 👈 This fixes 'lab()' error
+    })
+      .then((canvas) => {
+        document.body.removeChild(clone); // cleanup
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgWidth = 210;
+        const pageHeight = 297;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
 
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      // Multi-page support (rare, but safe)
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-      }
 
-      pdf.save(`Invoice_${displayInvoiceNumber}.pdf`);
-    }).catch((err) => {
-      console.error('PDF generation failed:', err);
-      input.style.backgroundColor = originalBg;
-      alert('PDF generate karne mein error aaya. Kripya dobara koshish karein.');
-    });
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save(`Invoice_${displayInvoiceNumber}.pdf`);
+      })
+      .catch((err) => {
+        console.error('PDF generation failed:', err);
+        document.body.removeChild(clone);
+        alert('PDF generate karne mein error aaya. Kripya dobara koshish karein.');
+      });
   };
 
   return (
@@ -387,7 +404,6 @@ export default function CreateInvoicePage() {
               </div>
 
               <div className="mt-6 space-y-3">
-                {/* ✅ UPDATED BUTTON */}
                 <button
                   onClick={exportToPDF}
                   className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold flex items-center gap-2 justify-center transition shadow-lg"
@@ -468,7 +484,7 @@ export default function CreateInvoicePage() {
         </div>
       )}
 
-      {/* Print Styles (optional, for manual print) */}
+      {/* Print Styles (optional) */}
       <style jsx global>{`
         @media print {
           body * {
