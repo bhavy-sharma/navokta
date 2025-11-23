@@ -23,7 +23,7 @@ export default function CreateInvoicePage() {
     address: 'Haryana, India',
     email: 'navokta@gmail.com',
     phone: '+91 8307233996',
-    upiId: 'navokta@oksbi',
+    upiId: 'bank.bhavy@oksbi',
   });
 
   const [logoPreview, setLogoPreview] = useState(null);
