@@ -134,7 +134,7 @@ export default function CreateInvoicePage() {
                 value={invoiceDetails.invoiceNumber}
                 onChange={(e) => setInvoiceDetails({ ...invoiceDetails, invoiceNumber: e.target.value })}
                 placeholder="Leave blank for auto"
-                icon={<Tag size={16} />}
+                // icon={<Tag size={16} />}
               />
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Currency</label>
@@ -149,14 +149,14 @@ export default function CreateInvoicePage() {
                 type="date"
                 value={invoiceDetails.issueDate}
                 onChange={(e) => setInvoiceDetails({ ...invoiceDetails, issueDate: e.target.value })}
-                icon={<Calendar size={16} />}
+                // icon={<Calendar size={16} />}
               />
               <InputField
                 label="Due Date"
                 type="date"
                 value={invoiceDetails.dueDate}
                 onChange={(e) => setInvoiceDetails({ ...invoiceDetails, dueDate: e.target.value })}
-                icon={<Calendar size={16} />}
+                // icon={<Calendar size={16} />}
               />
             </div>
           </Card>
