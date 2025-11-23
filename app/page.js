@@ -91,149 +91,163 @@ export default function CreateInvoicePage() {
 
   // ✅ 100% WORKING PDF EXPORT
   const exportToPDF = () => {
-    const printArea = document.getElementById('print-area');
-    if (!printArea) return;
+  const printArea = document.getElementById('print-area');
+  if (!printArea) return;
 
-    // Populate print area with current data
-    const content = `
-      <div style="font-family: Arial, sans-serif; font-size: 14px; background: white; color: black; padding: 24px; border-radius: 8px;">
-        ${logoPreview ? `<div style="text-align: center; margin-bottom: 24px;"><img src="${logoPreview}" alt="Logo" style="height: 64px; object-fit: contain;" /></div>` : ''}
+  // Generate safe HTML content (same as before)
+  const content = `
+    <div id="pdf-content" style="font-family: Arial, sans-serif; font-size: 12px; background: white; color: black; padding: 20px; line-height: 1.4;">
+      ${logoPreview ? `<div style="text-align: center; margin-bottom: 20px;"><img src="${logoPreview}" alt="Logo" style="height: 50px; object-fit: contain;" /></div>` : ''}
 
-        <div style="display: flex; justify-content: space-between; margin-bottom: 32px;">
-          <div>
-            <h2 style="font-size: 24px; font-weight: bold; color: #111827;">${billFrom.name}</h2>
-            <p style="color: #4b5563; margin-top: 4px;">${billFrom.address}</p>
-            <p style="color: #4b5563;">${billFrom.email}</p>
-            <p style="color: #4b5563;">${billFrom.phone}</p>
-            <p style="color: #4b5563;">UPI: ${billFrom.upiId}</p>
-          </div>
-          <div style="text-align: right;">
-            <h3 style="font-size: 20px; font-weight: bold; color: #111827;">INVOICE</h3>
-            <p style="color: #4b5563; margin-top: 4px;">#${displayInvoiceNumber}</p>
-            <p style="color: #4b5563;">Issue: ${invoiceDetails.issueDate}</p>
-            <p style="color: #4b5563;">Due: ${invoiceDetails.dueDate}</p>
-          </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+        <div>
+          <h2 style="font-size: 20px; font-weight: bold; color: #000;">${billFrom.name}</h2>
+          <p style="color: #555; margin: 2px 0;">${billFrom.address}</p>
+          <p style="color: #555; margin: 2px 0;">${billFrom.email}</p>
+          <p style="color: #555; margin: 2px 0;">${billFrom.phone}</p>
+          <p style="color: #555; margin: 2px 0;">UPI: ${billFrom.upiId}</p>
         </div>
-
-        <div style="margin-bottom: 32px;">
-          <h4 style="font-weight: bold; color: #111827; margin-bottom: 8px;">Bill To:</h4>
-          <p style="color: #1f2937;">${billTo.name || '—'}</p>
-          ${billTo.address ? `<p style="color: #4b5563;">${billTo.address}</p>` : ''}
-          ${billTo.email ? `<p style="color: #4b5563;">${billTo.email}</p>` : ''}
-          ${billTo.phone ? `<p style="color: #4b5563;">${billTo.phone}</p>` : ''}
-        </div>
-
-        <table style="width: 100%; margin-bottom: 24px; border-collapse: collapse;">
-          <thead>
-            <tr style="border-bottom: 2px solid #d1d5db;">
-              <th style="text-align: left; padding: 12px 0; color: #111827;">Description</th>
-              <th style="text-align: right; padding: 12px 0; color: #111827;">Qty</th>
-              <th style="text-align: right; padding: 12px 0; color: #111827;">Rate</th>
-              <th style="text-align: right; padding: 12px 0; color: #111827;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${items.map(item => `
-              <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 12px 0;">
-                  <div style="font-weight: bold; color: #111827;">${item.name || '—'}</div>
-                  ${item.description ? `<div style="font-size: 12px; color: #4b5563;">${item.description}</div>` : ''}
-                </td>
-                <td style="text-align: right; padding: 12px 0; color: #374151;">${item.qty}</td>
-                <td style="text-align: right; padding: 12px 0; color: #374151;">₹${Number(item.rate).toFixed(2)}</td>
-                <td style="text-align: right; padding: 12px 0; font-weight: bold; color: #111827;">₹${(item.qty * item.rate).toFixed(2)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-
-        <div style="text-align: right; margin-bottom: 24px; width: 256px; float: right;">
-          <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-            <span style="color: #374151;">Subtotal:</span>
-            <span style="color: #111827;">₹${subtotal.toFixed(2)}</span>
-          </div>
-          ${summary.discount > 0 ? `
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #ef4444;">
-              <span>Discount:</span>
-              <span>- ₹${summary.discount.toFixed(2)}</span>
-            </div>
-          ` : ''}
-          ${summary.tax > 0 ? `
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #374151;">
-              <span>Tax (${summary.tax}%):</span>
-              <span>₹${taxAmount.toFixed(2)}</span>
-            </div>
-          ` : ''}
-          ${summary.shipping > 0 ? `
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #374151;">
-              <span>Shipping:</span>
-              <span>₹${summary.shipping.toFixed(2)}</span>
-            </div>
-          ` : ''}
-          <div style="display: flex; justify-content: space-between; padding: 12px 0; border-top: 2px solid #1f2937; font-weight: bold; font-size: 18px;">
-            <span style="color: #111827;">TOTAL:</span>
-            <span style="color: #111827;">₹${total.toFixed(2)}</span>
-          </div>
-        </div>
-        <div style="clear: both;"></div>
-
-        ${notes ? `
-          <div style="margin-bottom: 16px; padding: 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;">
-            <h4 style="font-weight: bold; color: #111827; margin-bottom: 8px;">Notes:</h4>
-            <p style="color: #374151; font-size: 13px;">${notes}</p>
-          </div>
-        ` : ''}
-
-        ${termsAndConditions ? `
-          <div style="margin-bottom: 16px; padding: 16px; background: #fef9c3; border: 1px solid #fde68a; border-radius: 6px;">
-            <h4 style="font-weight: bold; color: #111827; margin-bottom: 8px;">Terms & Conditions:</h4>
-            <p style="color: #92400e; font-size: 13px;">${termsAndConditions}</p>
-          </div>
-        ` : ''}
-
-        ${signatureImage ? `
-          <div style="margin-bottom: 24px;">
-            <h4 style="font-weight: bold; color: #111827; margin-bottom: 8px;">Authorized Signature:</h4>
-            <img src="${signatureImage}" alt="Signature" style="height: 48px;" />
-          </div>
-        ` : ''}
-
-        <div style="text-align: center; margin-top: 32px; padding: 24px; background: linear-gradient(to bottom right, #eff6ff, #f3e8ff); border: 2px solid #93c5fd; border-radius: 8px;">
-          <h4 style="font-weight: bold; color: #111827; margin-bottom: 12px; font-size: 18px;">💳 Scan to Pay via UPI</h4>
-          <div style="display: inline-block; padding: 12px; background: white; border: 2px solid #d1d5db; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}" alt="QR" style="width: 144px; height: 144px;" />
-          </div>
-          <p style="color: #374151; font-weight: bold; margin-top: 12px;">Scan to pay ₹${total.toFixed(2)}</p>
-          <p style="color: #6b7280; font-size: 13px; margin-top: 4px;">UPI ID: ${billFrom.upiId}</p>
+        <div style="text-align: right;">
+          <h3 style="font-size: 18px; font-weight: bold; color: #000;">INVOICE</h3>
+          <p style="color: #555; margin: 2px 0;">#${displayInvoiceNumber}</p>
+          <p style="color: #555; margin: 2px 0;">Issue: ${invoiceDetails.issueDate}</p>
+          <p style="color: #555; margin: 2px 0;">Due: ${invoiceDetails.dueDate}</p>
         </div>
       </div>
-    `;
 
-    printArea.innerHTML = content;
+      <div style="margin-bottom: 20px;">
+        <h4 style="font-weight: bold; color: #000; margin-bottom: 6px;">Bill To:</h4>
+        <p style="color: #333; margin: 2px 0;">${billTo.name || '—'}</p>
+        ${billTo.address ? `<p style="color: #555; margin: 2px 0;">${billTo.address}</p>` : ''}
+        ${billTo.email ? `<p style="color: #555; margin: 2px 0;">${billTo.email}</p>` : ''}
+        ${billTo.phone ? `<p style="color: #555; margin: 2px 0;">${billTo.phone}</p>` : ''}
+      </div>
 
-    // Wait a moment for images to load
-    setTimeout(() => {
-      html2canvas(printArea, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      }).then((canvas) => {
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210;
-        const pageHeight = 297;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+          <tr style="border-bottom: 2px solid #000;">
+            <th style="text-align: left; padding: 8px 0; color: #000;">Description</th>
+            <th style="text-align: right; padding: 8px 0; color: #000;">Qty</th>
+            <th style="text-align: right; padding: 8px 0; color: #000;">Rate</th>
+            <th style="text-align: right; padding: 8px 0; color: #000;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(item => `
+            <tr style="border-bottom: 1px solid #ddd;">
+              <td style="padding: 8px 0;">
+                <div style="font-weight: bold; color: #000;">${item.name || '—'}</div>
+                ${item.description ? `<div style="font-size: 11px; color: #555; margin-top: 2px;">${item.description}</div>` : ''}
+              </td>
+              <td style="text-align: right; padding: 8px 0; color: #333;">${item.qty}</td>
+              <td style="text-align: right; padding: 8px 0; color: #333;">₹${Number(item.rate).toFixed(2)}</td>
+              <td style="text-align: right; padding: 8px 0; font-weight: bold; color: #000;">₹${(item.qty * item.rate).toFixed(2)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
 
-        pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-        pdf.save(`Invoice_${displayInvoiceNumber}.pdf`);
-      }).catch((err) => {
-        console.error('PDF Error:', err);
-        alert('PDF generate nahi ho paya. Kripya dobara try karein.');
-      });
-    }, 600);
-  };
+      <div style="margin-left: auto; width: 220px; float: right;">
+        <div style="display: flex; justify-content: space-between; padding: 6px 0; color: #333;">
+          <span>Subtotal:</span>
+          <span>₹${subtotal.toFixed(2)}</span>
+        </div>
+        ${summary.discount > 0 ? `
+          <div style="display: flex; justify-content: space-between; padding: 6px 0; color: #d00;">
+            <span>Discount:</span>
+            <span>- ₹${summary.discount.toFixed(2)}</span>
+          </div>
+        ` : ''}
+        ${summary.tax > 0 ? `
+          <div style="display: flex; justify-content: space-between; padding: 6px 0; color: #333;">
+            <span>Tax (${summary.tax}%):</span>
+            <span>₹${taxAmount.toFixed(2)}</span>
+          </div>
+        ` : ''}
+        ${summary.shipping > 0 ? `
+          <div style="display: flex; justify-content: space-between; padding: 6px 0; color: #333;">
+            <span>Shipping:</span>
+            <span>₹${summary.shipping.toFixed(2)}</span>
+          </div>
+        ` : ''}
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-top: 2px solid #000; font-weight: bold; font-size: 16px; margin-top: 8px;">
+          <span>TOTAL:</span>
+          <span>₹${total.toFixed(2)}</span>
+        </div>
+      </div>
+      <div style="clear: both;"></div>
+
+      ${notes ? `
+        <div style="margin-top: 20px; padding: 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px;">
+          <h4 style="font-weight: bold; color: #000; margin-bottom: 6px;">Notes:</h4>
+          <p style="color: #444; font-size: 12px; white-space: pre-wrap;">${notes}</p>
+        </div>
+      ` : ''}
+
+      ${termsAndConditions ? `
+        <div style="margin-top: 16px; padding: 12px; background: #fffbeb; border: 1px solid #ffe082; border-radius: 4px;">
+          <h4 style="font-weight: bold; color: #000; margin-bottom: 6px;">Terms & Conditions:</h4>
+          <p style="color: #856404; font-size: 12px; white-space: pre-wrap;">${termsAndConditions}</p>
+        </div>
+      ` : ''}
+
+      ${signatureImage ? `
+        <div style="margin-top: 20px;">
+          <h4 style="font-weight: bold; color: #000; margin-bottom: 6px;">Authorized Signature:</h4>
+          <img src="${signatureImage}" alt="Signature" style="height: 40px;" />
+        </div>
+      ` : ''}
+
+      <div style="text-align: center; margin-top: 24px; padding: 16px; background: #f0f8ff; border: 1px solid #add8e6; border-radius: 6px;">
+        <h4 style="font-weight: bold; color: #000; margin-bottom: 10px;">💳 Scan to Pay via UPI</h4>
+        <div style="display: inline-block; padding: 10px; background: white; border: 1px solid #ccc; border-radius: 6px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}" alt="QR" style="width: 130px; height: 130px;" />
+        </div>
+        <p style="color: #000; font-weight: bold; margin-top: 10px;">Scan to pay ₹${total.toFixed(2)}</p>
+        <p style="color: #555; font-size: 12px;">UPI ID: ${billFrom.upiId}</p>
+      </div>
+    </div>
+  `;
+
+  printArea.innerHTML = content;
+
+  setTimeout(() => {
+    const contentDiv = printArea.querySelector('#pdf-content');
+    if (!contentDiv) return;
+
+    html2canvas(contentDiv, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    }).then((canvas) => {
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add new pages while content remains
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`Invoice_${displayInvoiceNumber}.pdf`);
+    }).catch((err) => {
+      console.error('PDF Error:', err);
+      alert('PDF generate nahi ho paya. Kripya dobara try karein.');
+    });
+  }, 600);
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4 md:p-6">
