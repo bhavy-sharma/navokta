@@ -217,7 +217,7 @@ export default function CreateInvoicePage() {
               min="0"
               value={summary.discount}
               onChange={(e) => setSummary({ ...summary, discount: parseFloat(e.target.value) || 0 })}
-              icon={<Percent size={16} />}
+              // icon={<Percent size={16} />}
             />
             <InputField
               label="Tax (%)"
@@ -227,7 +227,7 @@ export default function CreateInvoicePage() {
               max="100"
               value={summary.tax}
               onChange={(e) => setSummary({ ...summary, tax: parseFloat(e.target.value) || 0 })}
-              icon={<Percent size={16} />}
+              // icon={<Percent size={16} />}
             />
             <InputField
               label="Shipping (₹)"
@@ -236,7 +236,7 @@ export default function CreateInvoicePage() {
               min="0"
               value={summary.shipping}
               onChange={(e) => setSummary({ ...summary, shipping: parseFloat(e.target.value) || 0 })}
-              icon={<Truck size={16} />}
+              // icon={<Truck size={16} />}
             />
           </Card>
         </div>
