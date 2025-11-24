@@ -34,10 +34,10 @@ export default function CreateInvoicePage() {
   const signatureRef = useRef(null);
 
   const [billTo, setBillTo] = useState({
-    name: 'Sakshi Jain',
-    address: 'Sikandrabad, Uttar Pradesh, India',
-    email: 'work.sakshi018@gmail.com',
-    phone: '7088017681',
+    name: 'Clint Name',
+    address: 'Address, India',
+    email: 'Email',
+    phone: '9999999999',
   });
 
   const today = new Date().toISOString().split('T')[0];
