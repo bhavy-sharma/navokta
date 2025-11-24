@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Building,
   User,
@@ -12,10 +12,12 @@ import {
   CreditCard,
   PenTool,
   X,
+  Printer,
 } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import QRCode from 'qrcode';
 
 export default function CreateInvoicePage() {
   const [billFrom, setBillFrom] = useState({
@@ -57,10 +59,10 @@ export default function CreateInvoicePage() {
     shipping: 0,
   });
 
+  const [terms, setTerms] = useState('Payment due within 15 days. Late payments may incur additional charges.');
   const [notes, setNotes] = useState('Thank you for your business!');
-  const [termsAndConditions] = useState('Payment due within 15 days. Late payments may incur additional charges.');
 
-  // Derived
+  // Derived values
   const displayInvoiceNumber = invoiceDetails.invoiceNumber || `INV-${new Date().getFullYear()}-${String(items.length).padStart(3, '0')}`;
   const subtotal = items.reduce((sum, item) => sum + item.qty * item.rate, 0);
   const discountAmount = summary.discount;
@@ -69,6 +71,14 @@ export default function CreateInvoicePage() {
   const total = afterDiscount + taxAmount + summary.shipping;
 
   const upiLink = `upi://pay?pa=${encodeURIComponent(billFrom.upiId)}&pn=${encodeURIComponent(billFrom.name)}&am=${total}&cu=INR&tn=Invoice%20${displayInvoiceNumber}`;
+
+  // Generate QR for preview
+  const [qrPreviewUrl, setQrPreviewUrl] = useState('');
+  useEffect(() => {
+    QRCode.toDataURL(upiLink, { width: 144 })
+      .then(setQrPreviewUrl)
+      .catch(console.error);
+  }, [upiLink]);
 
   // Handlers
   const addItem = () => setItems([...items, { id: Date.now().toString(), name: '', qty: 1, rate: 0, description: '' }]);
@@ -89,14 +99,138 @@ export default function CreateInvoicePage() {
     }
   };
 
-  // ✅ FULLY WORKING PDF EXPORT
-  const exportToPDF = () => {
+  // ✅ IMPROVED: Print Function - Optimized for A4 paper
+  const handlePrint = () => {
+    const invoicePreview = document.getElementById('invoice-preview');
+    if (!invoicePreview) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups for printing');
+      return;
+    }
+
+    let invoiceHTML = invoicePreview.innerHTML;
+
+    // Inject print-safe classes
+    invoiceHTML = invoiceHTML
+      .replace(/<img([^>]*?)alt="Company Logo"([^>]*?)>/g, '<img$1alt="Company Logo"$2 class="print-logo">')
+      .replace(/<img([^>]*?)alt="Signature"([^>]*?)>/g, '<img$1alt="Signature"$2 class="print-signature">')
+      .replace(/<img([^>]*?)alt="Payment QR"([^>]*?)>/g, '<img$1alt="Payment QR"$2 class="print-qr">');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice ${displayInvoiceNumber}</title>
+          <style>
+            body {
+              font-family: Arial, Helvetica, sans-serif;
+              margin: 0;
+              padding: 15mm;
+              background: white;
+              color: black;
+              font-size: 11pt;
+              line-height: 1.4;
+            }
+            /* Logo fix */
+            .print-logo {
+              max-height: 30px !important;
+              height: auto !important;
+              width: auto !important;
+              margin: 0 auto 12px !important;
+              display: block !important;
+            }
+            /* Signature fix */
+            .print-signature {
+              max-height: 24px !important;
+              height: auto !important;
+              width: auto !important;
+            }
+            /* QR fix */
+            .print-qr {
+              width: 100px !important;
+              height: 100px !important;
+            }
+            h2 { font-size: 16pt; margin: 4px 0; font-weight: bold; }
+            h3 { font-size: 14pt; margin: 4px 0; font-weight: bold; }
+            h4 { font-size: 12pt; margin: 8px 0 4px; font-weight: bold; }
+            p, div { margin: 2px 0; font-size: 10pt; }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 12px 0 16px;
+            }
+            th, td {
+              padding: 6px 4px;
+              text-align: left;
+              border-bottom: 1px solid #000;
+            }
+            th {
+              font-weight: bold;
+              border-bottom: 2px solid #000;
+            }
+            .text-right { text-align: right; }
+            .font-bold { font-weight: bold; }
+            .mb-4 { margin-bottom: 12px; }
+            .mb-6 { margin-bottom: 16px; }
+            .mt-8 { margin-top: 24px; }
+            .text-center { text-align: center; }
+            .bg-gray-50,
+            .bg-yellow-50 {
+              background: #f5f5f5 !important;
+              border: 1px solid #ddd !important;
+            }
+            @media print {
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                box-shadow: none !important;
+              }
+              body { padding: 10mm; }
+              .bg-gradient-to-br,
+              .shadow-lg,
+              .border-2 {
+                box-shadow: none !important;
+                border: none !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div id="print-content">
+            ${invoiceHTML}
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(() => window.close(), 500);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  };
+
+  // ✅ PDF Export with PROPER QR Code
+  const exportToPDF = async () => {
     const printArea = document.getElementById('print-area');
     if (!printArea) return;
 
+    let qrDataUrl;
+    try {
+      qrDataUrl = await QRCode.toDataURL(upiLink, { width: 150 });
+    } catch (err) {
+      console.error('QR Generate Error:', err);
+      alert('QR generate nahi ho paya.');
+      return;
+    }
+
     const content = `
       <div id="pdf-content" style="font-family: Arial, sans-serif; font-size: 12px; background: white; color: black; padding: 20px; line-height: 1.4;">
-        ${logoPreview ? `<div style="text-align: center; margin-bottom: 20px;"><img src="${logoPreview}" alt="Logo" style="height: 50px; object-fit: contain;" /></div>` : ''}
+        ${logoPreview ? `<div style="text-align: center; margin-bottom: 20px;"><img src="${logoPreview}" alt="Logo" style="max-height: 30px; height: auto; width: auto; object-fit: contain;" /></div>` : ''}
 
         <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
           <div>
@@ -183,22 +317,24 @@ export default function CreateInvoicePage() {
           </div>
         ` : ''}
 
-        <div style="margin-top: 16px; padding: 12px; background: #fffbeb; border: 1px solid #ffe082; border-radius: 4px;">
-          <h4 style="font-weight: bold; color: #000; margin-bottom: 6px;">Terms & Conditions:</h4>
-          <p style="color: #856404; font-size: 12px; white-space: pre-wrap;">Payment due within 15 days. Late payments may incur additional charges.</p>
-        </div>
+        ${terms ? `
+          <div style="margin-top: 16px; padding: 12px; background: #fffbeb; border: 1px solid #ffe082; border-radius: 4px;">
+            <h4 style="font-weight: bold; color: #000; margin-bottom: 6px;">Terms & Conditions:</h4>
+            <p style="color: #856404; font-size: 12px; white-space: pre-wrap;">${terms}</p>
+          </div>
+        ` : ''}
 
         ${signatureImage ? `
           <div style="margin-top: 20px;">
             <h4 style="font-weight: bold; color: #000; margin-bottom: 6px;">Authorized Signature:</h4>
-            <img src="${signatureImage}" alt="Signature" style="height: 40px;" />
+            <img src="${signatureImage}" alt="Signature" style="max-height: 24px; height: auto; width: auto;" />
           </div>
         ` : ''}
 
         <div style="text-align: center; margin-top: 24px; padding: 16px; background: #f0f8ff; border: 1px solid #add8e6; border-radius: 6px;">
           <h4 style="font-weight: bold; color: #000; margin-bottom: 10px;">💳 Scan to Pay via UPI</h4>
           <div style="display: inline-block; padding: 10px; background: white; border: 1px solid #ccc; border-radius: 6px;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}" alt="QR" style="width: 130px; height: 130px;" />
+            <img src="${qrDataUrl}" alt="Payment QR" style="width: 100px; height: 100px;" />
           </div>
           <p style="color: #000; font-weight: bold; margin-top: 10px;">Scan to pay ₹${total.toFixed(2)}</p>
           <p style="color: #555; font-size: 12px;">UPI ID: ${billFrom.upiId}</p>
@@ -212,42 +348,55 @@ export default function CreateInvoicePage() {
       const contentDiv = printArea.querySelector('#pdf-content');
       if (!contentDiv) return;
 
-      html2canvas(contentDiv, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      }).then((canvas) => {
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210;
-        const pageHeight = 297;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
+      const images = contentDiv.getElementsByTagName('img');
+      const imagePromises = [];
+      for (let img of images) {
+        const promise = new Promise((resolve) => {
+          if (img.complete) resolve();
+          else {
+            img.onload = img.onerror = resolve;
+          }
+        });
+        imagePromises.push(promise);
+      }
 
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      Promise.all(imagePromises).then(() => {
+        html2canvas(contentDiv, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff',
+          logging: false,
+        }).then((canvas) => {
+          const imgData = canvas.toDataURL('image/jpeg', 0.92);
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgWidth = 210;
+          const pageHeight = 297;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          let heightLeft = imgHeight;
+          let position = 0;
 
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
           pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
           heightLeft -= pageHeight;
-        }
 
-        pdf.save(`Invoice_${displayInvoiceNumber}.pdf`);
-      }).catch((err) => {
-        console.error('PDF Error:', err);
-        alert('PDF generate nahi ho paya. Kripya dobara try karein.');
+          while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+          }
+
+          pdf.save(`Invoice_${displayInvoiceNumber}.pdf`);
+        }).catch((err) => {
+          console.error('PDF Error:', err);
+          alert('PDF generate nahi ho paya. Kripya dobara try karein.');
+        });
       });
-    }, 600);
+    }, 1000);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4 md:p-6">
-      {/* Hidden print area for PDF */}
       <div id="print-area" style={{ position: 'fixed', left: '-9999px', top: 0, width: '800px' }}></div>
 
       <header className="mb-8 text-center">
@@ -328,6 +477,29 @@ export default function CreateInvoicePage() {
             <InputField label="Tax (%)" type="number" step="0.1" min="0" max="100" value={summary.tax} onChange={(e) => setSummary({ ...summary, tax: parseFloat(e.target.value) || 0 })} />
             <InputField label="Shipping (₹)" type="number" step="0.01" min="0" value={summary.shipping} onChange={(e) => setSummary({ ...summary, shipping: parseFloat(e.target.value) || 0 })} />
           </Card>
+
+          <Card title="Terms & Notes" icon={<FileText className="text-purple-400" />}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">Notes</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Thank you for your business!"
+                rows="3"
+                className="w-full px-3 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">Terms & Conditions</label>
+              <textarea
+                value={terms}
+                onChange={(e) => setTerms(e.target.value)}
+                placeholder="Payment due within 15 days. Late payments may incur additional charges."
+                rows="3"
+                className="w-full px-3 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              />
+            </div>
+          </Card>
         </div>
 
         {/* PREVIEW */}
@@ -346,7 +518,7 @@ export default function CreateInvoicePage() {
               >
                 {logoPreview && (
                   <div className="text-center mb-6">
-                    <img src={logoPreview} alt="Company Logo" className="h-16 mx-auto object-contain" />
+                    <img src={logoPreview} alt="Company Logo" className="h-16 mx-auto object-contain print-logo" />
                   </div>
                 )}
 
@@ -436,26 +608,28 @@ export default function CreateInvoicePage() {
                   </div>
                 )}
 
-                <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-300">
-                  <h4 className="font-bold text-gray-900 mb-2">Terms & Conditions:</h4>
-                  <p className="text-yellow-900 text-sm whitespace-pre-wrap">Payment due within 15 days. Late payments may incur additional charges.</p>
-                </div>
+                {terms && (
+                  <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-300">
+                    <h4 className="font-bold text-gray-900 mb-2">Terms & Conditions:</h4>
+                    <p className="text-yellow-900 text-sm whitespace-pre-wrap">{terms}</p>
+                  </div>
+                )}
 
                 {signatureImage && (
                   <div className="mb-6">
                     <h4 className="font-bold text-gray-900 mb-2">Authorized Signature:</h4>
-                    <img src={signatureImage} alt="Signature" className="h-12" />
+                    <img src={signatureImage} alt="Signature" className="h-12 print-signature" />
                   </div>
                 )}
 
                 <div className="text-center mt-8 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border-2 border-blue-300">
                   <h4 className="font-bold text-gray-900 mb-3 text-lg">💳 Scan to Pay via UPI</h4>
                   <div className="inline-block p-3 bg-white rounded-lg border-2 border-gray-300 shadow-md">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`}
-                      alt="Payment QR"
-                      className="w-36 h-36"
-                    />
+                    {qrPreviewUrl ? (
+                      <img src={qrPreviewUrl} alt="Payment QR" className="w-36 h-36 print-qr" />
+                    ) : (
+                      <div className="w-36 h-36 bg-gray-200 animate-pulse rounded" />
+                    )}
                   </div>
                   <p className="text-gray-700 font-semibold mt-3">Scan to pay ₹{total.toFixed(2)}</p>
                   <p className="text-gray-500 text-sm mt-1">UPI ID: {billFrom.upiId}</p>
@@ -463,6 +637,13 @@ export default function CreateInvoicePage() {
               </div>
 
               <div className="mt-6 space-y-3">
+                <button
+                  onClick={handlePrint}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg font-semibold flex items-center gap-2 justify-center transition shadow-lg"
+                >
+                  <Printer size={20} /> Print Invoice
+                </button>
+
                 <button
                   onClick={exportToPDF}
                   className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold flex items-center gap-2 justify-center transition shadow-lg"
@@ -542,14 +723,6 @@ export default function CreateInvoicePage() {
           </div>
         </div>
       )}
-
-      <style jsx global>{`
-        @media print {
-          body * { visibility: hidden; }
-          #invoice-preview, #invoice-preview * { visibility: visible; }
-          #invoice-preview { position: absolute; left: 0; top: 0; width: 100%; }
-        }
-      `}</style>
     </div>
   );
 }
